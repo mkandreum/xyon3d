@@ -16,8 +16,6 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - polyform-network
     volumes:
       # Persistent storage for uploaded images
       - uploads_data:/app/uploads
@@ -37,14 +35,12 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-polyform_secure_pass}
       - POSTGRES_DB=${DB_NAME:-polyform_db}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTRES_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    networks:
-      - polyform-network
     # Expose port for external access (optional, for debugging)
     # ports:
     #   - "5432:5432"
@@ -59,7 +55,3 @@ volumes:
   # Application data persistent storage
   app_data:
     driver: local
-
-networks:
-  polyform-network:
-    driver: bridge
