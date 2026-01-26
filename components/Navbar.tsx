@@ -71,11 +71,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-auto animate-fade-in-up">
-      <nav ref={navRef} className="glass-nav rounded-full px-2 py-2 flex items-center justify-center shadow-2xl relative">
+      <nav ref={navRef} className="glass-nav rounded-full p-3 flex items-center justify-center shadow-2xl relative">
 
         {/* Sliding Pill */}
         <div
-          className="absolute bg-white/10 rounded-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] h-[calc(100%-16px)] top-2"
+          className="absolute bg-white/10 rounded-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] h-[calc(100%-24px)] top-3"
           style={{
             left: pillStyle.left,
             width: pillStyle.width,
@@ -105,14 +105,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               className={`
-                relative flex items-center justify-center px-4 py-3 rounded-full transition-colors duration-300 z-10
+                relative flex items-center justify-center px-6 py-4 rounded-full transition-colors duration-300 z-10
                 ${isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}
               `}
             >
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="relative">
                   <tab.icon
-                    size={showAdminNav ? 18 : 20}
+                    size={showAdminNav ? 20 : 24}
                     strokeWidth={isActive ? 2.5 : 2}
                     className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-current'}`}
                   />
