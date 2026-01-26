@@ -91,15 +91,20 @@ export const StoreView: React.FC<StoreViewProps> = ({
 
             {/* Product Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-6 lg:gap-8 max-w-7xl mx-auto">
-                {filteredProducts.map(product => (
-                    <ProductCard
+                {filteredProducts.map((product, index) => (
+                    <div
                         key={product.id}
-                        product={product}
-                        onAddToCart={addToCart}
-                        isLiked={wishlist.includes(product.id)}
-                        onToggleLike={toggleWishlist}
-                        onClick={setSelectedProduct}
-                    />
+                        className="animate-fade-in-up"
+                        style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                    >
+                        <ProductCard
+                            product={product}
+                            onAddToCart={addToCart}
+                            isLiked={wishlist.includes(product.id)}
+                            onToggleLike={toggleWishlist}
+                            onClick={setSelectedProduct}
+                        />
+                    </div>
                 ))}
             </div>
 

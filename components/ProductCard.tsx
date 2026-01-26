@@ -19,7 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => (
     <div
         onClick={() => onClick(product)}
-        className="group relative bg-zinc-900/40 rounded-3xl overflow-hidden transition-all duration-500 hover:bg-zinc-800/80 cursor-pointer border border-white/5 hover:border-white/10 flex flex-col h-full hover:shadow-2xl hover:shadow-blue-500/5"
+        className="group relative bg-zinc-900/40 rounded-3xl overflow-hidden transition-all duration-500 hover:bg-zinc-800/80 cursor-pointer border border-white/5 hover:border-white/10 flex flex-col h-full hover:shadow-2xl hover:shadow-blue-500/5 hover:-translate-y-1"
     >
         {/* Image Container */}
         <div className="aspect-square w-full overflow-hidden relative bg-black">
@@ -32,9 +32,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
             <button
                 onClick={(e) => onToggleLike(product.id, e)}
-                className="absolute top-4 right-4 p-2.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:bg-white/10 transition-colors z-20 group/heart"
+                className="absolute top-4 right-4 p-2.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:bg-white/10 transition-colors z-20 group/heart active:scale-95"
             >
-                <Heart size={18} className={`${isLiked ? 'fill-rose-500 text-rose-500' : 'text-white group-hover/heart:text-rose-400'} transition-colors`} />
+                <Heart size={18} className={`${isLiked ? 'fill-rose-500 text-rose-500' : 'text-white group-hover/heart:text-rose-400'} transition-all duration-300 ${isLiked ? 'scale-110' : 'scale-100'}`} />
             </button>
         </div>
 
@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
             <button
                 onClick={(e) => onAddToCart(product, e)}
-                className="mt-auto w-full py-3 rounded-2xl bg-white text-black font-bold hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98] text-sm tracking-wide"
+                className="mt-auto w-full py-3 rounded-2xl bg-white text-black font-bold hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98] text-sm tracking-wide shadow-lg hover:shadow-xl hover:shadow-white/5"
             >
                 <Plus size={16} /> Añadir al Carrito
             </button>
