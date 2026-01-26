@@ -527,7 +527,7 @@ app.post('/api/create-payment', async (req, res) => {
 
         // Create Payment
         // Expect orderId from frontend (created via /api/orders first)
-        const orderId = req.body.orderId;
+        // const orderId = req.body.orderId; // Removed duplicate
 
         const payment = await monei.payments.create({
             amount: Math.round(total * 100), // In cents
