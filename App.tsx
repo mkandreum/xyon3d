@@ -921,59 +921,69 @@ export default function App() {
 
   // Load initial data from API
 
-  // Load initial data from API
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        // Check for existing user session
-        const token = localStorage.getItem('xyon3d_token');
-        const savedUser = localStorage.getItem('xyon3d_user');
-        if (token && savedUser) {
-          const parsedUser = JSON.parse(savedUser);
-          setUser(parsedUser);
-          if (parsedUser.role === 'admin') setIsAuthenticated(true);
-        }
-
-        // Fetch products (Critical)
-        try {
-          const productsData = await ApiService.getProducts();
-          setProducts(productsData);
-        } catch (err) {
-          console.error('Error loading products:', err);
-          setError('Failed to load products. Please check your connection.');
-          return; // Stop if products fail
-        }
-
-        // Fetch other data (Non-critical, handle 401s)
-        const safeFetch = async (fetchFn: () => Promise<any>, setter: (data: any) => void) => {
-          try {
-            const data = await fetchFn();
-            setter(data);
-          } catch (err: any) {
-            // Ignore 401 errors as they are expected when not logged in
-            if (err.message !== 'Unauthorized') {
-              console.warn('Non-critical fetch failed:', err);
-            }
-          }
-        };
-
-        await Promise.all([
-          safeFetch(ApiService.getSettings, setSettings),
-          safeFetch(ApiService.getOrders, setOrders),
-          safeFetch(ApiService.getWishlist, setWishlist),
-        ]);
-
-        setError(null);
-      } catch (err) {
-        console.error('Unexpected error loading initialization data:', err);
-        setError('An unexpected error occurred.');
-      } finally {
-        setLoading(false);
+  // Data Fetching
+  const refreshData = async () => {
+    try {
+      // Check for user session
+      const token = localStorage.getItem('xyon3d_token');
+      const savedUser = localStorage.getItem('xyon3d_user');
+      if (token && savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        if (parsedUser.role === 'admin') setIsAuthenticated(true);
       }
-    };
-    loadData();
+
+      // Fetch products (Critical)
+      try {
+        const productsData = await ApiService.getProducts();
+        setProducts(productsData);
+      } catch (err) {
+        console.error('Error loading products:', err);
+        setError('Failed to load products. Please check your connection.');
+        setLoading(false);
+        return;
+      }
+
+      // Fetch other data (Non-critical, handle 401s)
+      const safeFetch = async (fetchFn: () => Promise<any>, setter: (data: any) => void) => {
+        try {
+          const data = await fetchFn();
+          setter(data);
+        } catch (err: any) {
+          if (err.message !== 'Unauthorized') {
+            console.warn('Non-critical fetch failed:', err);
+          } else {
+            setter([]); // Reset if unauthorized (e.g. on logout)
+          }
+        }
+      };
+
+      await Promise.all([
+        safeFetch(ApiService.getSettings, setSettings),
+        safeFetch(ApiService.getOrders, setOrders),
+        safeFetch(ApiService.getWishlist, setWishlist),
+      ]);
+
+      setError(null);
+    } catch (err) {
+      console.error('Initial load error:', err);
+      setError('An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
   }, []);
+
+  const handleLogin = (userData: any, token: string) => {
+    localStorage.setItem('xyon3d_token', token);
+    localStorage.setItem('xyon3d_user', JSON.stringify(userData));
+    setUser(userData);
+    if (userData.role === 'admin') setIsAuthenticated(true);
+    refreshData(); // Refresh protected data like orders/wishlist
+  };
 
 
   const categories = useMemo(() => {
@@ -1228,10 +1238,7 @@ export default function App() {
           {/* FAVORITES VIEW */}
           {view === ViewState.FAVORITES && (
             !user ? (
-              <AuthScreen onLogin={(userData, token) => {
-                setUser(userData);
-                if (userData.role === 'admin') setIsAuthenticated(true);
-              }} />
+              <AuthScreen onLogin={handleLogin} />
             ) : (
               <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto">
                 <div className="flex items-center gap-4 mb-12">
@@ -1262,11 +1269,7 @@ export default function App() {
           {/* PROFILE VIEW */}
           {view === ViewState.PROFILE && (
             !user ? (
-              <AuthScreen onLogin={(userData, token) => {
-                setUser(userData);
-                // If user is admin (role check), set isAdmin. But for now general user login.
-                if (userData.role === 'admin') setIsAuthenticated(true);
-              }} />
+              <AuthScreen onLogin={handleLogin} />
             ) : (
               <div className="max-w-xl mx-auto px-4 py-12 sm:py-20 animate-fade-in-up">
                 <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden text-center group">
@@ -1298,6 +1301,7 @@ export default function App() {
                       onClick={() => {
                         setUser(null);
                         setIsAuthenticated(false);
+                        setCart([]); // Clear cart on sign out
                         localStorage.removeItem('xyon3d_token');
                         localStorage.removeItem('xyon3d_user');
                         setView(ViewState.STORE);
@@ -1377,23 +1381,23 @@ export default function App() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {!checkoutEmail ? ( // Simplified check
+                          {/* Only show email input if user is NOT logged in AND hasn't entered an email yet */}
+                          {!user && !checkoutEmail && (
                             <>
                               <input
                                 type="email"
-                                placeholder="Email Address"
+                                placeholder="Email Address for Guest Checkout"
                                 className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white focus:border-blue-500 outline-none transition-colors text-sm"
                                 value={checkoutEmail}
                                 onChange={(e) => setCheckoutEmail(e.target.value)}
                               />
-                              {/* Only show Payment button if email is entered (handled by rendering CheckoutForm below) */}
                             </>
-                          ) : null}
+                          )}
 
-                          {checkoutEmail && (
+                          {(user || checkoutEmail) && (
                             <CheckoutForm
                               total={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
-                              userEmail={checkoutEmail}
+                              userEmail={user ? user.email : checkoutEmail}
                               items={cart}
                             />
                           )}
@@ -1420,10 +1424,7 @@ export default function App() {
                 onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
               />
             ) : (
-              <AuthScreen isAdmin={true} onLogin={(user, token) => {
-                setUser(user);
-                setIsAuthenticated(true);
-              }} />
+              <AuthScreen isAdmin={true} onLogin={handleLogin} />
             )
           )}
 
