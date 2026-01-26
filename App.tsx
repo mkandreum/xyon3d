@@ -657,7 +657,7 @@ volumes:
       {/* Tab bar removed - now handled by Floating Navbar */}
 
       {activeTab === 'products' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-1">
             <div className="glass-card p-6 rounded-3xl sticky top-24">
               <h2 className="text-lg font-heading font-bold mb-6 flex items-center gap-2 text-white">
@@ -789,7 +789,7 @@ volumes:
               <div className="space-y-3">
                 {orders.map(order => (
                   <div key={order.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 sm:p-8 hover:border-white/10 transition-all group">
-                    <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                       {/* Left Side: Order Info */}
                       <div className="lg:w-1/3 space-y-4">
                         <div className="flex items-center gap-3">
@@ -868,12 +868,12 @@ volumes:
 
       {activeTab === 'settings' && (
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
             {/* Column 1: Store & Email */}
             <div className="space-y-8">
               {/* Store Identity */}
-              <div className="glass-card p-8 rounded-3xl border border-white/5">
+              <div className="glass-card p-6 sm:p-8 rounded-3xl border border-white/5">
                 <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
                   <ShoppingBag size={20} className="text-blue-500" /> Identidad de la Tienda
                 </h2>
@@ -900,7 +900,7 @@ volumes:
               </div>
 
               {/* Email / SMTP Service */}
-              <div className="glass-card p-8 rounded-3xl border border-white/5">
+              <div className="glass-card p-6 sm:p-8 rounded-3xl border border-white/5">
                 <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
                   <Send size={20} className="text-green-500" /> Servidor de Correo (SMTP)
                 </h2>
@@ -926,7 +926,7 @@ volumes:
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">ContraseÃ±a SMTP</label>
+                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Contraseña SMTP</label>
                       <input
                         type="password"
                         className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
@@ -942,7 +942,7 @@ volumes:
             {/* Column 2: Payment & Actions */}
             <div className="space-y-8">
               {/* MONEI / Payment Settings */}
-              <div className="glass-card p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden h-full">
+              <div className="glass-card p-6 sm:p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden h-full">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <DollarSign size={80} />
                 </div>
@@ -982,7 +982,7 @@ volumes:
                     onClick={() => onSaveSettings(localSettings)}
                     className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 hover:-translate-y-1 transition-all shadow-xl shadow-white/5 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
                   >
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Guardar Toda la ConfiguraciÃ³n
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Guardar Toda la Configuración
                   </button>
                 </div>
               </div>
@@ -995,11 +995,11 @@ volumes:
         activeTab === 'system' && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center">
+              <div className="glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center justify-center">
                 <span className="text-5xl font-heading font-bold text-white mb-2">{orders.length}</span>
                 <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Orders Processed</span>
               </div>
-              <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center">
+              <div className="glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center justify-center">
                 <span className="text-5xl font-heading font-bold text-blue-500 mb-2">${orders.reduce((acc, o) => acc + o.total, 0).toFixed(2)}</span>
                 <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Revenue</span>
               </div>
@@ -1365,7 +1365,7 @@ export default function App() {
               </div>
 
               {/* Product Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8 max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-6 lg:gap-8 max-w-7xl mx-auto">
                 {filteredProducts.map(product => (
                   <ProductCard
                     key={product.id}
@@ -1537,7 +1537,7 @@ export default function App() {
                   </div>
 
                   <div className="w-full lg:w-96">
-                    <div className="glass-card p-8 rounded-3xl sticky top-24">
+                    <div className="glass-card p-6 sm:p-8 rounded-3xl sticky top-24">
                       <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Order Summary</h3>
                       <div className="space-y-3 mb-8">
                         <div className="flex justify-between text-zinc-400 text-sm">
@@ -1664,3 +1664,4 @@ export default function App() {
     </div >
   );
 }
+
