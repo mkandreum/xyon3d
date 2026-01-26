@@ -25,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: ViewState.PROFILE, icon: User, label: 'Profile' },
   ];
 
-  if (isAdminVisible) {
+  if (isAdminVisible || isAuthenticated) {
     storeTabs.push({
       id: ViewState.ADMIN,
       icon: isAuthenticated ? Settings : Lock,

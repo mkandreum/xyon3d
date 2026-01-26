@@ -1162,7 +1162,12 @@ export default function App() {
 
             <div className="flex items-center gap-2 sm:gap-4">
               {isAuthenticated && (
-                <span className="text-[9px] sm:text-[10px] text-blue-400 font-bold border border-blue-500/20 px-2 sm:px-3 py-1 bg-blue-500/5 rounded-full uppercase tracking-wider">Admin</span>
+                <button
+                  onClick={() => setView(ViewState.ADMIN)}
+                  className="text-[9px] sm:text-[10px] text-blue-400 font-bold border border-blue-500/20 px-2 sm:px-3 py-1 bg-blue-500/5 rounded-full uppercase tracking-wider hover:bg-blue-500/10 transition-colors"
+                >
+                  Admin
+                </button>
               )}
             </div>
           </header>

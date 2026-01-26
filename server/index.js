@@ -729,9 +729,9 @@ app.get('/api/wishlist', async (req, res) => {
         let query = 'SELECT product_id as "productId" FROM wishlist WHERE session_id = $1';
         let params = [sessionId];
 
-        if (userId) {
+        if (userId && !isNaN(parseInt(userId))) {
             query = 'SELECT product_id as "productId" FROM wishlist WHERE user_id = $1';
-            params = [userId];
+            params = [parseInt(userId)];
         }
 
         const result = await pool.query(query, params);
