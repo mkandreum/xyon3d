@@ -1209,29 +1209,36 @@ export default function App() {
 
           {/* FAVORITES VIEW */}
           {view === ViewState.FAVORITES && (
-            <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto">
-              <div className="flex items-center gap-4 mb-12">
-                <Heart className="text-rose-500 fill-rose-500" size={32} />
-                <h2 className="text-4xl font-heading font-bold text-white">Saved Items</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {wishlistProducts.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAddToCart={addToCart}
-                    isLiked={true}
-                    onToggleLike={toggleWishlist}
-                    onClick={setSelectedProduct}
-                  />
-                ))}
-              </div>
-              {wishlistProducts.length === 0 && (
-                <div className="text-center py-32 text-zinc-500 font-light">
-                  Your wishlist is empty. Start exploring to save items.
+            !user ? (
+              <AuthScreen onLogin={(userData, token) => {
+                setUser(userData);
+                if (userData.role === 'admin') setIsAuthenticated(true);
+              }} />
+            ) : (
+              <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto">
+                <div className="flex items-center gap-4 mb-12">
+                  <Heart className="text-rose-500 fill-rose-500" size={32} />
+                  <h2 className="text-4xl font-heading font-bold text-white">Saved Items</h2>
                 </div>
-              )}
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {wishlistProducts.map(product => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={addToCart}
+                      isLiked={true}
+                      onToggleLike={toggleWishlist}
+                      onClick={setSelectedProduct}
+                    />
+                  ))}
+                </div>
+                {wishlistProducts.length === 0 && (
+                  <div className="text-center py-32 text-zinc-500 font-light">
+                    Your wishlist is empty. Start exploring to save items.
+                  </div>
+                )}
+              </div>
+            )
           )}
 
           {/* PROFILE VIEW */}
