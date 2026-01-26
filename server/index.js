@@ -173,6 +173,28 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Authentication Middleware
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+};
+
+const isAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ error: 'Admin access required' });
+    }
+};
+
 // -------------------- AUTHENTICATION --------------------
 
 // Admin 2FA Code from Env
@@ -342,8 +364,8 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// Update product
-app.put('/api/products/:id', async (req, res) => {
+// Update product (Admin only)
+app.put('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, price, category, imageUrl, modelUrl, gallery } = req.body;
@@ -367,8 +389,8 @@ app.put('/api/products/:id', async (req, res) => {
     }
 });
 
-// Delete product
-app.delete('/api/products/:id', async (req, res) => {
+// Delete product (Admin only)
+app.delete('/api/products/:id', authenticateToken, isAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING id', [id]);
@@ -430,12 +452,20 @@ const sendEmail = async (to, subject, html) => {
 
 // -------------------- ORDERS --------------------
 
-// Get all orders
-app.get('/api/orders', async (req, res) => {
+// Get orders (Protected: User sees own, Admin sees all)
+app.get('/api/orders', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT id, customer_email as "customerEmail", total, status, items, created_at as "date" FROM orders ORDER BY created_at DESC'
-        );
+        let result;
+        if (req.user.role === 'admin') {
+            result = await pool.query(
+                'SELECT id, customer_email as "customerEmail", total, status, items, created_at as "date" FROM orders ORDER BY created_at DESC'
+            );
+        } else {
+            result = await pool.query(
+                'SELECT id, customer_email as "customerEmail", total, status, items, created_at as "date" FROM orders WHERE customer_email = $1 ORDER BY created_at DESC',
+                [req.user.email]
+            );
+        }
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching orders:', error);
@@ -506,8 +536,8 @@ app.post('/api/orders', async (req, res) => {
     }
 });
 
-// Update order status
-app.patch('/api/orders/:id/status', async (req, res) => {
+// Update order status (Admin only)
+app.patch('/api/orders/:id/status', authenticateToken, isAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -600,8 +630,8 @@ app.post('/api/create-payment', async (req, res) => {
 
 // -------------------- SETTINGS --------------------
 
-// Get all settings
-app.get('/api/settings', async (req, res) => {
+// Get all settings (Admin only)
+app.get('/api/settings', authenticateToken, isAdmin, async (req, res) => {
     try {
         const result = await pool.query('SELECT key, value FROM settings');
         const settings = {};
@@ -615,8 +645,8 @@ app.get('/api/settings', async (req, res) => {
     }
 });
 
-// Update settings
-app.put('/api/settings', async (req, res) => {
+// Update settings (Admin only)
+app.put('/api/settings', authenticateToken, isAdmin, async (req, res) => {
     try {
         const settings = req.body;
 
