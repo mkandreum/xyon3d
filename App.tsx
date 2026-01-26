@@ -574,8 +574,8 @@ const AdminPanel: React.FC<{
   orders: Order[];
   onUpdateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => void;
   onLogout: () => void;
-}> = ({ settings, onSaveSettings, products, onAddProduct, onDeleteProduct, orders, onUpdateOrderStatus, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'settings' | 'system'>('products');
+  activeTab: 'products' | 'orders' | 'settings' | 'system';
+}> = ({ settings, onSaveSettings, products, onAddProduct, onDeleteProduct, orders, onUpdateOrderStatus, onLogout, activeTab }) => {
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: []
   });
@@ -654,31 +654,7 @@ volumes:
 
   return (
     <div className="max-w-7xl mx-auto pb-32 pt-6 px-4 sm:px-6 animate-fade-in-up">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-        <div className="flex gap-2 p-1.5 bg-zinc-900 rounded-full border border-white/5 shadow-sm overflow-x-auto">
-          {[
-            { id: 'products', label: 'Artículos', icon: Box },
-            { id: 'orders', label: 'Pedidos', icon: ShoppingBag },
-            { id: 'settings', label: 'Tienda', icon: Settings },
-            { id: 'system', label: 'Docker', icon: Database }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
-                ? 'bg-zinc-800 text-white shadow-md border border-white/5'
-                : 'text-zinc-500 hover:text-white hover:bg-zinc-800/50'
-                }`}
-            >
-              <tab.icon size={14} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <button onClick={onLogout} className="text-zinc-500 hover:text-rose-500 flex items-center gap-2 text-xs font-bold uppercase tracking-wider px-4 transition-colors">
-          <LogOut size={16} /> <span className="hidden sm:inline">Log Out</span>
-        </button>
-      </div>
+      {/* Tab bar removed - now handled by Floating Navbar */}
 
       {activeTab === 'products' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -944,6 +920,7 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [activeAdminTab, setActiveAdminTab] = useState<'products' | 'orders' | 'settings' | 'system'>('products');
   const [checkoutEmail, setCheckoutEmail] = useState('');
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -1501,6 +1478,7 @@ export default function App() {
                     orders={orders}
                     onUpdateOrderStatus={handleUpdateOrderStatus}
                     onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
+                    activeTab={activeAdminTab}
                   />
                 </div>
               </div>
@@ -1524,16 +1502,15 @@ export default function App() {
         }
       </div >
 
-      {/* Floating Pill Navbar - Hidden if in Admin Authenticated mode */}
-      {!(view === ViewState.ADMIN && isAuthenticated) && (
-        <Navbar
-          currentView={view}
-          setView={setView}
-          cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
-          isAuthenticated={isAuthenticated}
-          isAdminVisible={adminVisible}
-        />
-      )}
+      < Navbar
+        currentView={view}
+        setView={setView}
+        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
+        isAuthenticated={isAuthenticated}
+        isAdminVisible={adminVisible}
+        activeAdminTab={activeAdminTab}
+        onAdminTabChange={setActiveAdminTab}
+      />
     </div >
   );
 }
