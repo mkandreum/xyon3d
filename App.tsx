@@ -245,10 +245,10 @@ export default function App() {
 
         {/* Header - Transparent Sticky (Only shown if NOT in Admin Authenticated mode) */}
         {!(view === ViewState.ADMIN && isAuthenticated) && (
-          <header className="px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center sticky top-0 z-40 transition-all duration-300 backdrop-blur-md bg-black/40 border-b border-white/5">
-            <button onClick={() => setLogoClicks(p => p + 1)} className="text-xl sm:text-2xl font-heading font-extrabold tracking-tight text-white select-none focus:outline-none flex items-center gap-2 sm:gap-3">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white text-black flex items-center justify-center rounded-lg">
-                <Hexagon size={16} className="sm:w-[18px] sm:h-[18px]" fill="black" />
+          <header className="px-4 sm:px-6 py-5 sm:py-7 flex justify-between items-center sticky top-0 z-40 transition-all duration-300 backdrop-blur-md bg-black/40 border-b border-white/5">
+            <button onClick={() => setLogoClicks(p => p + 1)} className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-white select-none focus:outline-none flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white text-black flex items-center justify-center rounded-xl">
+                <Hexagon size={22} className="sm:w-[26px] sm:h-[26px]" fill="black" />
               </div>
               <span className="hidden sm:inline">{settings.storeName || 'Xyon3D'}</span>
               <span className="sm:hidden">Xyon3D</span>
