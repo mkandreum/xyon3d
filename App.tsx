@@ -1,1038 +1,25 @@
-﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, Trash2, Box, Send, Database, Cloud, X, Loader2, Settings, Lock, LogOut, Search, Heart, User, ChevronRight, ChevronLeft, Hexagon, Info, ShieldCheck, Terminal, AlertTriangle, Cpu, Sparkles, ShoppingCart, ArrowRight, Package, TrendingUp, DollarSign, ShoppingBag, UploadCloud } from 'lucide-react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
+import { Loader2, AlertTriangle, Hexagon, LogOut, Heart } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { ViewState, Product, CartItem, AppSettings, Order } from './types';
 import { ApiService } from './services/api';
-import { generateProductDescription } from './services/gemini.ts';
 
-
-// ----------------------------------------------------------------------
-// SUB-COMPONENTS
-// ----------------------------------------------------------------------
-
-// 1. Product Card - Premium Minimalist
-const ProductCard: React.FC<{
-  product: Product;
-  onAddToCart: (p: Product, e: React.MouseEvent) => void;
-  isLiked: boolean;
-  onToggleLike: (id: string, e: React.MouseEvent) => void;
-  onClick: (p: Product) => void;
-}> = ({ product, onAddToCart, isLiked, onToggleLike, onClick }) => (
-  <div
-    onClick={() => onClick(product)}
-    className="group relative bg-zinc-900/40 rounded-3xl overflow-hidden transition-all duration-500 hover:bg-zinc-800/80 cursor-pointer border border-white/5 hover:border-white/10 flex flex-col h-full hover:shadow-2xl hover:shadow-blue-500/5"
-  >
-    {/* Image Container */}
-    <div className="aspect-square w-full overflow-hidden relative bg-black">
-      <img
-        src={product.imageUrl}
-        alt={product.name}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-transparent to-transparent opacity-60" />
-
-      <button
-        onClick={(e) => onToggleLike(product.id, e)}
-        className="absolute top-4 right-4 p-2.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10 hover:bg-white/10 transition-colors z-20 group/heart"
-      >
-        <Heart size={18} className={`${isLiked ? 'fill-rose-500 text-rose-500' : 'text-white group-hover/heart:text-rose-400'} transition-colors`} />
-      </button>
-    </div>
-
-    {/* Content */}
-    <div className="p-5 flex flex-col flex-grow">
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1 pr-2">
-          <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1.5 block">
-            {product.category}
-          </span>
-          <h3 className="font-heading font-bold text-lg text-white leading-tight group-hover:text-blue-200 transition-colors">{product.name}</h3>
-        </div>
-        <span className="font-sans text-white font-medium text-lg tracking-tight">${product.price.toFixed(2)}</span>
-      </div>
-
-      <p className="text-zinc-500 text-sm line-clamp-2 mb-4 font-light leading-relaxed">{product.description}</p>
-
-      <button
-        onClick={(e) => onAddToCart(product, e)}
-        className="mt-auto w-full py-3 rounded-2xl bg-white text-black font-bold hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98] text-sm tracking-wide"
-      >
-        <Plus size={16} /> Add to Cart
-      </button>
-    </div>
-  </div>
-);
-
-// 2. Product Detail Modal - Floating Sheet
-const ProductDetailModal: React.FC<{
-  product: Product;
-  isOpen: boolean;
-  onClose: () => void;
-  onAddToCart: (p: Product) => void;
-}> = ({ product, isOpen, onClose, onAddToCart }) => {
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [show3D, setShow3D] = useState(false);
-
-  const images = useMemo(() => {
-    return product.gallery && product.gallery.length > 0
-      ? [product.imageUrl, ...product.gallery.filter(url => url !== product.imageUrl)]
-      : [product.imageUrl];
-  }, [product]);
-
-  useEffect(() => {
-    if (!isOpen || show3D || images.length <= 1) return;
-    const interval = setInterval(() => {
-      setActiveImageIndex(prev => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [isOpen, show3D, images.length]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-fade-in-up" onClick={onClose} />
-
-      <div className="relative w-full max-w-6xl h-[90vh] sm:h-auto sm:max-h-[85vh] bg-zinc-900 border border-white/10 rounded-[2rem] flex flex-col md:flex-row shadow-2xl overflow-hidden animate-scale-in ring-1 ring-white/5">
-        <button onClick={onClose} className="absolute top-6 right-6 z-50 p-2 bg-black/40 rounded-full text-white hover:bg-white/20 transition-colors border border-white/5 backdrop-blur-md">
-          <X size={20} />
-        </button>
-
-        {/* Media Column */}
-        <div className="w-full md:w-1/2 h-[45%] md:h-auto bg-black relative group">
-          {show3D && product.modelUrl ? (
-            // @ts-ignore
-            <model-viewer
-              src={product.modelUrl}
-              camera-controls
-              auto-rotate
-              shadow-intensity="1"
-              style={{ width: '100%', height: '100%', backgroundColor: '#050505' }}
-              camera-orbit="45deg 55deg 2.5m"
-            />
-          ) : (
-            <img
-              src={images[activeImageIndex]}
-              alt={product.name}
-              className="w-full h-full object-cover opacity-90"
-            />
-          )}
-
-          {/* Image Navigation Dots */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-            {images.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => { setActiveImageIndex(idx); setShow3D(false); }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${!show3D && idx === activeImageIndex ? 'bg-white w-8' : 'bg-white/20 w-1.5 hover:bg-white/40'}`}
-              />
-            ))}
-            {product.modelUrl && (
-              <button
-                onClick={() => setShow3D(true)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${show3D ? 'bg-blue-500 w-8' : 'bg-white/20 w-1.5 hover:bg-white/40'}`}
-              />
-            )}
-          </div>
-
-          {product.modelUrl && (
-            <button
-              onClick={() => setShow3D(!show3D)}
-              className="absolute bottom-6 right-6 px-4 py-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-white text-xs font-semibold uppercase tracking-wider hover:bg-white hover:text-black transition-all flex items-center gap-2"
-            >
-              <Hexagon size={14} /> {show3D ? '2D Photo' : '3D View'}
-            </button>
-          )}
-        </div>
-
-        {/* Details Column */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col overflow-y-auto bg-zinc-900">
-          <div className="mb-auto">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                {product.category}
-              </span>
-              <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">In Stock</span>
-            </div>
-
-            <h2 className="text-4xl sm:text-5xl font-heading font-bold text-white mb-4 leading-tight">{product.name}</h2>
-            <div className="text-3xl font-light text-white mb-8 border-b border-white/5 pb-8">${product.price.toFixed(2)}</div>
-
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">Description</h3>
-                <p className="text-zinc-300 leading-relaxed font-light text-base">
-                  {product.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-zinc-800/50 rounded-2xl p-4 border border-white/5">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Material</div>
-                  <div className="text-sm font-semibold text-white">PLA+ / PETG</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-2xl p-4 border border-white/5">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Precision</div>
-                  <div className="text-sm font-semibold text-white">0.12mm Layer</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => { onAddToCart(product); onClose(); }}
-            className="w-full py-4 mt-8 bg-white text-black rounded-2xl font-bold text-base hover:bg-zinc-200 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] uppercase tracking-wide"
-          >
-            Add to Cart <ArrowRight size={20} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 2.5 Auth Modal (Login/Register)
-const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; onLoginSuccess: (user: any, token: string) => void }> = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        const data = await ApiService.loginUser({ email, password });
-        onLoginSuccess(data.user, data.token);
-      } else {
-        const data = await ApiService.register({ email, password, name });
-        onLoginSuccess(data.user, data.token);
-      }
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-zinc-900 border border-white/10 rounded-3xl p-8 max-w-md w-full relative shadow-2xl">
-        <button onClick={onClose} className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors">
-          <X size={20} />
-        </button>
-
-        <h2 className="text-2xl font-heading font-bold text-white mb-6 text-center">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h2>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-xs mb-4 flex items-center gap-2">
-            <AlertTriangle size={14} /> {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div className="space-y-1">
-              <label className="text-xs text-zinc-400 uppercase tracking-widest font-bold ml-1">Name</label>
-              <input
-                type="text"
-                required
-                className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                value={name}
-                onChange={e => setName(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <label className="text-xs text-zinc-400 uppercase tracking-widest font-bold ml-1">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs text-zinc-400 uppercase tracking-widest font-bold ml-1">Password</label>
-            <input
-              type="password"
-              required
-              className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors shadow-lg mt-2 flex items-center justify-center gap-2"
-          >
-            {loading && <Loader2 className="animate-spin" size={16} />}
-            {isLogin ? 'Sign In' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-zinc-500 text-xs hover:text-white transition-colors"
-          >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 5. Checkout Component
-// 5. Checkout Component (MONEI Hosted)
-const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem[], initialAddress?: string }> = ({ total, userEmail, items, initialAddress = '' }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [address, setAddress] = useState(initialAddress);
-
-  const handleMoneiPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address.trim()) {
-      setError('Shipping address is required');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    try {
-      // 1. Create Order (Pending)
-      const order = await ApiService.createOrder({
-        customerEmail: userEmail,
-        items: items,
-        total: total,
-        status: 'pending',
-        date: new Date().toISOString(),
-        shippingAddress: address // Send the selected address
-      });
-
-      // 2. Create MONEI Payment
-      const payment = await ApiService.createMoneiPayment({
-        orderId: order.id,
-        total: total,
-        customerEmail: userEmail
-      });
-
-      // 3. Redirect to MONEI
-      if (payment.redirectUrl) {
-        window.location.href = payment.redirectUrl;
-      } else {
-        throw new Error("No redirect URL received from payment gateway");
-      }
-    } catch (err: any) {
-      console.error('Payment flow error:', err);
-      setError(err.message || 'Payment process failed. Please try again.');
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6 animate-fade-in-up">
-      <div className="bg-zinc-900 border border-white/10 p-6 rounded-3xl text-center group transition-all hover:border-blue-500/30">
-        <div className="mb-6 flex justify-center">
-          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform duration-500">
-            <Box size={24} />
-          </div>
-        </div>
-
-        <p className="text-zinc-400 mb-6 text-sm">Secure payment via MONEI (Bizum, PayPal, Cards)</p>
-
-        {/* Address Input */}
-        <div className="mb-6 text-left space-y-2">
-          <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold ml-1">Shipping Address</label>
-          <textarea
-            required
-            placeholder="Street, Number, Floor, ZIP Code, City, Country"
-            rows={3}
-            className="w-full bg-zinc-950 border border-white/10 rounded-2xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors resize-none"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </div>
-
-        <div className="flex justify-center gap-3 mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
-          <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Bizum</div>
-          <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Visa/MC</div>
-          <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">PayPal</div>
-        </div>
-
-        <button
-          onClick={handleMoneiPayment}
-          disabled={loading}
-          className={`
-            w-full py-5 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-3 shadow-xl 
-            ${loading ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-zinc-100 hover:-translate-y-1 active:scale-95'}
-          `}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin" size={20} />
-              <span>Opening Gateway...</span>
-            </>
-          ) : (
-            <>
-              <ShieldCheck size={20} className="text-blue-600" />
-              <span className="uppercase tracking-widest text-sm">Pay ${total.toFixed(2)} Now</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {error && (
-        <div className="text-red-400 text-xs text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/20 animate-shake">
-          {error}
-        </div>
-      )}
-
-      <div className="flex items-center justify-center gap-2 text-zinc-600 text-[10px] uppercase font-bold tracking-widest">
-        <Lock size={12} className="text-zinc-700" />
-        <span>256-bit SSL Encrypted Connection</span>
-      </div>
-    </div>
-  );
-};
-
-// 3. Auth Screen (Login / Register) - Unified
-const AuthScreen: React.FC<{
-  onLogin: (user: any, token: string) => void,
-  isAdmin?: boolean
-}> = ({ onLogin, isAdmin = false }) => {
-  const [isLogin, setIsLogin] = useState(true);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState(''); // For register
-  const [code, setCode] = useState(''); // For 2FA
-  const [show2FA, setShow2FA] = useState(false);
-
-  const [status, setStatus] = useState<'idle' | 'error' | 'success'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('idle');
-    setErrorMsg('');
-
-    try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const body: any = { email, password };
-      if (!isLogin) body.name = name;
-      if (show2FA) body.code = code;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.require2fa) {
-          setShow2FA(true);
-          return;
-        }
-        setStatus('success');
-        // Store session
-        localStorage.setItem('xyon3d_token', data.token);
-        localStorage.setItem('xyon3d_user', JSON.stringify(data.user));
-
-        // Short delay for animation
-        setTimeout(() => onLogin(data.user, data.token), 800);
-      } else {
-        setStatus('error');
-        setErrorMsg(data.error || 'Authentication failed');
-        if (!show2FA) setPassword('');
-        setTimeout(() => setStatus('idle'), 2000);
-      }
-    } catch (error) {
-      setStatus('error');
-      setErrorMsg('Connection error');
-      setTimeout(() => setStatus('idle'), 2000);
-    }
-  };
-
-  return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center animate-fade-in-up p-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white border border-white/5 shadow-xl rotate-3">
-            <User size={28} />
-          </div>
-          <h2 className="text-2xl font-heading font-bold text-white mb-2">
-            {isAdmin ? 'Admin Portal' : (isLogin ? 'Welcome Back' : 'Create Account')}
-          </h2>
-          <p className="text-zinc-500 text-sm">
-            {isAdmin ? 'Authorized personnel only.' : (isLogin ? 'Sign in to access your orders.' : 'Join Xyon3D today.')}
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!show2FA ? (
-            <>
-              {!isLogin && (
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition-colors"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              )}
-              <input
-                type="email"
-                placeholder="Email Address"
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition-colors"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition-colors"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </>
-          ) : (
-            <div className="animate-fade-in-up">
-              <p className="text-zinc-400 text-xs mb-2 text-center">Enter Security Code (2FA)</p>
-              <input
-                type="text"
-                placeholder="Security Code"
-                className="w-full bg-zinc-900 border border-blue-500/50 rounded-xl p-4 text-white text-center tracking-[1em] font-mono focus:border-blue-500 outline-none transition-colors"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                autoFocus
-                required
-              />
-            </div>
-          )}
-
-          <button
-            disabled={status === 'success'}
-            className={`w-full py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2
-              ${status === 'success' ? 'bg-green-500 text-white' : 'bg-white text-black hover:bg-zinc-200'}
-            `}
-          >
-            {status === 'success' ? <ShieldCheck size={20} /> : (show2FA ? 'Verify Code' : (isLogin ? 'Sign In' : 'Sign Up'))}
-          </button>
-
-          {status === 'error' && (
-            <div className="text-red-400 text-xs text-center mt-2 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
-              {errorMsg}
-            </div>
-          )}
-        </form>
-
-        {!isAdmin && !show2FA && (
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-zinc-500 hover:text-white text-sm transition-colors"
-            >
-              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// 4. Admin Panel - Modern Dashboard
-const AdminPanel: React.FC<{
-  settings: AppSettings;
-  onSaveSettings: (s: AppSettings) => void;
-  products: Product[];
-  onAddProduct: (p: Product) => void;
-  onDeleteProduct: (id: string) => void;
-  orders: Order[];
-  onUpdateOrderStatus: (id: string, status: 'pending' | 'shipped' | 'delivered') => void;
-  onLogout: () => void;
-  activeTab: 'products' | 'orders' | 'settings' | 'system';
-}> = ({ settings, onSaveSettings, products, onAddProduct, onDeleteProduct, orders, onUpdateOrderStatus, onLogout, activeTab }) => {
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
-    name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: []
-  });
-  const [galleryText, setGalleryText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
-
-  const handleAiGenerate = async () => {
-    if (!newProduct.name) return;
-    setIsGenerating(true);
-    const desc = await generateProductDescription(newProduct.name);
-    setNewProduct(prev => ({ ...prev, description: desc }));
-    setIsGenerating(false);
-  };
-
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setIsUploading(true);
-      try {
-        const url = await ApiService.uploadImage(e.target.files[0]);
-        setNewProduct(prev => ({ ...prev, imageUrl: url }));
-      } catch (err) {
-        console.error('Upload failed:', err);
-        alert('Failed to upload image');
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  };
-
-  const handleProductSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newProduct.name && newProduct.price) {
-      onAddProduct({
-        id: Date.now().toString(),
-        name: newProduct.name,
-        price: Number(newProduct.price),
-        description: newProduct.description || '',
-        imageUrl: newProduct.imageUrl || '',
-        categoryId: newProduct.category || 'General',
-        modelUrl: newProduct.modelUrl || '',
-        gallery: galleryText.split('\n').filter(url => url.trim() !== ''),
-        stock: newProduct.stock || 10
-      });
-      setNewProduct({ name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: [], stock: 10 });
-      setGalleryText('');
-    }
-  };
-
-  const dockerComposeContent = `version: '3.8'
-services:
-  app:
-    build: .
-    labels:
-      - "coolify.managed=true"
-      - "coolify.port=3000"
-    environment:
-      - DATABASE_URL=postgres://${localSettings.smtpUser}:${localSettings.smtpPass}@db:5432/xyon3d
-    restart: always
-
-  db:
-    image: postgres:15-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=securepassword
-      - POSTGRES_DB=xyon3d
-    restart: always
-
-volumes:
-  postgres_data:
-`;
-
-  return (
-    <div className="max-w-7xl mx-auto pb-32 pt-6 px-4 sm:px-6 animate-fade-in-up">
-      {/* Tab bar removed - now handled by Floating Navbar */}
-
-      {activeTab === 'products' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          <div className="lg:col-span-1">
-            <div className="glass-card p-6 rounded-3xl sticky top-24">
-              <h2 className="text-lg font-heading font-bold mb-6 flex items-center gap-2 text-white">
-                <Plus size={20} className="text-blue-500" /> Add Product
-              </h2>
-              <form onSubmit={handleProductSubmit} className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Product Name"
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                  value={newProduct.name}
-                  onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                    value={newProduct.price || ''}
-                    onChange={e => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Category"
-                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                    value={newProduct.category}
-                    onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Stock"
-                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                    value={newProduct.stock || ''}
-                    onChange={e => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="relative">
-                  <textarea
-                    placeholder="Description"
-                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none h-28 resize-none leading-relaxed"
-                    value={newProduct.description}
-                    onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAiGenerate}
-                    disabled={!newProduct.name || isGenerating}
-                    className="absolute bottom-3 right-3 text-xs bg-zinc-800 text-blue-400 px-2.5 py-1.5 rounded-lg border border-white/10 hover:bg-blue-500 hover:text-white transition-all flex items-center gap-1.5 font-medium disabled:opacity-50"
-                  >
-                    {isGenerating ? <Loader2 className="animate-spin w-3 h-3" /> : <Sparkles size={12} />}
-                    {isGenerating ? 'Thinking...' : 'AI Generate'}
-                  </button>
-                </div>
-
-                {/* Image Upload UI */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Main Image URL"
-                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                      value={newProduct.imageUrl}
-                      onChange={e => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                    />
-                    <label className="cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-white p-3.5 rounded-xl border border-white/10 transition-colors">
-                      {isUploading ? <Loader2 className="animate-spin" size={20} /> : <UploadCloud size={20} />}
-                      <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
-                    </label>
-                  </div>
-                  {newProduct.imageUrl && (
-                    <div className="w-full h-32 bg-black rounded-xl overflow-hidden border border-white/5">
-                      <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover opacity-80" />
-                    </div>
-                  )}
-                </div>                <input
-                  type="text"
-                  placeholder="3D Model URL (.glb)"
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                  value={newProduct.modelUrl}
-                  onChange={e => setNewProduct({ ...newProduct, modelUrl: e.target.value })}
-                />
-                <textarea
-                  placeholder="Gallery URLs (Line Separated)"
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none h-20 resize-none"
-                  value={galleryText}
-                  onChange={e => setGalleryText(e.target.value)}
-                />
-                <button type="submit" className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-200 transition-colors shadow-lg">
-                  Create Product
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-4">
-            {products.map(p => (
-              <div key={p.id} className="bg-zinc-900 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-white/10 transition-all group">
-                <div className="flex items-center gap-5">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-black">
-                    <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white text-base group-hover:text-blue-400 transition-colors">{p.name}</h4>
-                    <p className="text-zinc-500 text-sm mt-0.5">${p.price} â€¢ {p.category}</p>
-                  </div>
-                </div>
-                <button onClick={() => onDeleteProduct(p.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 text-zinc-400 hover:bg-rose-500 hover:text-white transition-all">
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'orders' && (
-        <div className="space-y-4">
-          <div className="glass-card p-6 rounded-3xl">
-            <h2 className="text-lg font-heading font-bold mb-6 flex items-center gap-2 text-white">
-              <ShoppingBag size={20} className="text-blue-500" /> Order Management
-            </h2>
-
-            {orders.length === 0 ? (
-              <div className="text-center py-16 text-zinc-500">
-                <Package size={48} className="mx-auto mb-4 opacity-50" />
-                <p>No orders yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {orders.map(order => (
-                  <div key={order.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 sm:p-8 hover:border-white/10 transition-all group">
-                    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-                      {/* Left Side: Order Info */}
-                      <div className="lg:w-1/3 space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-zinc-400 group-hover:text-blue-400 transition-colors">
-                            <Package size={20} />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-white text-lg">Pedido #{order.id}</h4>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
-                              {new Date(order.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-2">
-                          <p className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                            <User size={14} className="text-zinc-500" /> {order.customerEmail}
-                          </p>
-                          {order.shippingAddress && (
-                            <p className="text-xs text-zinc-500 flex items-start gap-2 leading-relaxed">
-                              <Box size={14} className="text-zinc-600 mt-0.5" />
-                              <span className="italic">{order.shippingAddress}</span>
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                          <select
-                            value={order.status}
-                            onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as any)}
-                            className={`flex-grow bg-zinc-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest outline-none transition-all cursor-pointer
-                              ${order.status === 'delivered' ? 'text-green-400 border-green-500/20' :
-                                order.status === 'shipped' ? 'text-blue-400 border-blue-500/20' : 'text-yellow-400 border-yellow-500/20'}
-                            `}
-                          >
-                            <option value="pending">Pendiente</option>
-                            <option value="shipped">Enviado</option>
-                            <option value="delivered">Entregado</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Right Side: Products Grid */}
-                      <div className="lg:w-2/3">
-                        <div className="bg-black/20 rounded-[1.5rem] border border-white/5 overflow-hidden">
-                          <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">ArtÃ­culos en Pedido</span>
-                            <span className="text-xl font-heading font-bold text-white">${order.total.toFixed(2)}</span>
-                          </div>
-                          <div className="max-h-[300px] overflow-y-auto p-4 space-y-3">
-                            {order.items.map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-4 bg-zinc-800/30 p-3 rounded-2xl border border-white/5 group/item transition-colors hover:bg-zinc-800/50">
-                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0">
-                                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-grow">
-                                  <h5 className="text-sm font-bold text-white group-hover/item:text-blue-400 transition-colors uppercase tracking-tight">{item.name}</h5>
-                                  <div className="flex items-center justify-between mt-0.5">
-                                    <span className="text-xs text-zinc-500">Cantidad: <span className="text-zinc-300 font-bold">{item.quantity}</span></span>
-                                    <span className="text-xs font-bold text-white">${(item.price * (item.quantity || 1)).toFixed(2)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'settings' && (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-
-            {/* Column 1: Store & Email */}
-            <div className="space-y-8">
-              {/* Store Identity */}
-              <div className="glass-card p-6 sm:p-8 rounded-3xl border border-white/5">
-                <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
-                  <ShoppingBag size={20} className="text-blue-500" /> Identidad de la Tienda
-                </h2>
-                <div className="space-y-5">
-                  <div>
-                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Nombre de la Tienda</label>
-                    <input
-                      type="text"
-                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                      value={localSettings.storeName}
-                      onChange={e => setLocalSettings({ ...localSettings, storeName: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Email del Administrador</label>
-                    <input
-                      type="email"
-                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                      value={localSettings.adminEmail}
-                      onChange={e => setLocalSettings({ ...localSettings, adminEmail: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Email / SMTP Service */}
-              <div className="glass-card p-6 sm:p-8 rounded-3xl border border-white/5">
-                <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
-                  <Send size={20} className="text-green-500" /> Servidor de Correo (SMTP)
-                </h2>
-                <div className="space-y-5">
-                  <div>
-                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Host SMTP</label>
-                    <input
-                      type="text"
-                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                      value={localSettings.smtpHost}
-                      onChange={e => setLocalSettings({ ...localSettings, smtpHost: e.target.value })}
-                      placeholder="smtp.gmail.com"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Usuario SMTP</label>
-                      <input
-                        type="text"
-                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                        value={localSettings.smtpUser}
-                        onChange={e => setLocalSettings({ ...localSettings, smtpUser: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Contraseña SMTP</label>
-                      <input
-                        type="password"
-                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                        value={localSettings.smtpPass}
-                        onChange={e => setLocalSettings({ ...localSettings, smtpPass: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Column 2: Payment & Actions */}
-            <div className="space-y-8">
-              {/* MONEI / Payment Settings */}
-              <div className="glass-card p-6 sm:p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden h-full">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <DollarSign size={80} />
-                </div>
-
-                <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2 relative z-10">
-                  <ShieldCheck size={20} className="text-blue-400" /> Pasarela de Pago
-                </h2>
-                <p className="text-zinc-500 text-xs mb-8 relative z-10 px-1 border-l-2 border-blue-500 pl-3">
-                  Configura tus credenciales de <strong>MONEI</strong> para aceptar pagos seguros con Bizum, Tarjeta y PayPal.
-                </p>
-
-                <div className="space-y-6 relative z-10">
-                  <div>
-                    <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-1 font-bold ml-1">MONEI Account ID</label>
-                    <input
-                      type="text"
-                      placeholder="u_..."
-                      className="w-full bg-zinc-950 border border-blue-500/30 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors shadow-inner"
-                      value={localSettings.moneiAccountId || ''}
-                      onChange={e => setLocalSettings({ ...localSettings, moneiAccountId: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-1 font-bold ml-1">MONEI API Key</label>
-                    <input
-                      type="password"
-                      placeholder="m_..."
-                      className="w-full bg-zinc-950 border border-blue-500/30 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors shadow-inner"
-                      value={localSettings.moneiApiKey || ''}
-                      onChange={e => setLocalSettings({ ...localSettings, moneiApiKey: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-12 pt-8 border-t border-white/5">
-                  <button
-                    onClick={() => onSaveSettings(localSettings)}
-                    className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 hover:-translate-y-1 transition-all shadow-xl shadow-white/5 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
-                  >
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Guardar Toda la Configuración
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {
-        activeTab === 'system' && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center justify-center">
-                <span className="text-5xl font-heading font-bold text-white mb-2">{orders.length}</span>
-                <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Orders Processed</span>
-              </div>
-              <div className="glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center justify-center">
-                <span className="text-5xl font-heading font-bold text-blue-500 mb-2">${orders.reduce((acc, o) => acc + o.total, 0).toFixed(2)}</span>
-                <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Revenue</span>
-              </div>
-            </div>
-
-            <div className="glass-card p-10 rounded-3xl">
-              <h2 className="text-xl font-heading font-bold mb-6 flex items-center gap-2 text-white">
-                <Cloud size={24} className="text-blue-500" /> Deployment Configuration
-              </h2>
-              <div className="bg-black/80 p-6 rounded-2xl border border-white/10 font-mono text-xs text-zinc-400 overflow-x-auto relative">
-                <div className="absolute top-0 right-0 p-2 text-[10px] text-zinc-600 uppercase">docker-compose.yml</div>
-                <pre>{dockerComposeContent}</pre>
-              </div>
-              <p className="mt-4 text-zinc-500 text-sm">
-                Copy this configuration to your Coolify instance to deploy the persistent database alongside the application.
-              </p>
-            </div>
-          </div>
-        )
-      }
-    </div >
-  );
-};
-
-// ----------------------------------------------------------------------
-// MAIN APP COMPONENT
-// ----------------------------------------------------------------------
+// Components
+import { ProductCard } from './components/ProductCard';
+import { ProductDetailModal } from './components/ProductDetailModal';
+import { AuthScreen } from './components/AuthScreen';
+import { AdminPanel } from './components/AdminPanel';
+
+// Views
+import { StoreView } from './views/StoreView';
+import { CartView } from './views/CartView';
+import { ProfileView } from './views/ProfileView';
 
 export default function App() {
   const [view, setView] = useState<ViewState>(ViewState.STORE);
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<AppSettings>({
-    storeName: 'Loading...', smtpHost: '', smtpUser: '', smtpPass: '', adminEmail: '',
+    storeName: 'Cargando...', smtpHost: '', smtpUser: '', smtpPass: '', adminEmail: '',
     moneiAccountId: '', moneiApiKey: ''
   });
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -1049,7 +36,7 @@ export default function App() {
   // Auth & Admin Secret State
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Admin auth
   const [user, setUser] = useState<any>(null); // Customer auth
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  // const [showAuthModal, setShowAuthModal] = useState(false); // Removed unused
 
   const [adminVisible, setAdminVisible] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
@@ -1057,11 +44,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeAdminTab, setActiveAdminTab] = useState<'products' | 'orders' | 'settings' | 'system'>('products');
-  const [checkoutEmail, setCheckoutEmail] = useState('');
+  // const [checkoutEmail, setCheckoutEmail] = useState(''); // Moved to CartView
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  // Load initial data from API
 
   // Data Fetching
   const refreshData = async () => {
@@ -1081,7 +66,7 @@ export default function App() {
         setProducts(productsData);
       } catch (err) {
         console.error('Error loading products:', err);
-        setError('Failed to load products. Please check your connection.');
+        setError('Fallo al cargar productos. Por favor verifica tu conexión.');
         setLoading(false);
         return;
       }
@@ -1109,7 +94,7 @@ export default function App() {
       setError(null);
     } catch (err) {
       console.error('Initial load error:', err);
-      setError('An unexpected error occurred.');
+      setError('Ocurrió un error inesperado.');
     } finally {
       setLoading(false);
     }
@@ -1129,21 +114,6 @@ export default function App() {
     }
     refreshData(); // Refresh protected data like orders/wishlist
   };
-
-
-  const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category));
-    return ['All', ...Array.from(cats)];
-  }, [products]);
-
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, searchQuery, selectedCategory]);
 
   const wishlistProducts = useMemo(() => {
     return products.filter(p => wishlist.includes(p.id));
@@ -1186,49 +156,24 @@ export default function App() {
     }));
   };
 
-  const handleCheckout = async () => {
-    if (!checkoutEmail || cart.length === 0) return;
-    setCheckoutStatus('processing');
-
-    try {
-      const order = await ApiService.createOrder({
-        items: cart,
-        total: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0),
-        date: new Date().toISOString(),
-        customerEmail: checkoutEmail,
-        status: 'pending'
-      });
-
-      setOrders(prev => [order, ...prev]);
-      setCart([]);
-      setCheckoutEmail('');
-      setCheckoutStatus('success');
-      setTimeout(() => setCheckoutStatus('idle'), 3000);
-    } catch (err) {
-      console.error('Error creating order:', err);
-      alert('Failed to create order. Please try again.');
-      setCheckoutStatus('idle');
-    }
-  };
-
   const handleSaveSettings = async (newSettings: AppSettings) => {
     try {
       await ApiService.saveSettings(newSettings);
       setSettings(newSettings);
-      alert("System Configuration Updated");
+      alert("Configuración del Sistema Actualizada");
     } catch (err) {
       console.error('Error saving settings:', err);
-      alert('Failed to save settings');
+      alert('Fallo al guardar la configuración');
     }
   };
 
   const handleAddProduct = async (p: Product) => {
     try {
-      const savedProduct = await ApiService.saveProduct(p);
+      await ApiService.saveProduct(p);
       setProducts(await ApiService.getProducts());
     } catch (err) {
       console.error('Error adding product:', err);
-      alert('Failed to add product');
+      alert('Fallo al añadir producto');
     }
   };
 
@@ -1238,7 +183,7 @@ export default function App() {
       setProducts(await ApiService.getProducts());
     } catch (err) {
       console.error('Error deleting product:', err);
-      alert('Failed to delete product');
+      alert('Fallo al eliminar producto');
     }
   };
 
@@ -1248,7 +193,7 @@ export default function App() {
       setOrders(await ApiService.getOrders());
     } catch (err) {
       console.error('Error updating order status:', err);
-      alert('Failed to update order status');
+      alert('Fallo al actualizar estado del pedido');
     }
   };
 
@@ -1257,7 +202,7 @@ export default function App() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-400">Loading Xyon3D Store...</p>
+          <p className="text-zinc-400">Cargando Tienda Xyon3D...</p>
         </div>
       </div>
     );
@@ -1268,13 +213,13 @@ export default function App() {
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Connection Error</h2>
+          <h2 className="text-xl font-bold text-white mb-2">Error de Conexión</h2>
           <p className="text-zinc-400 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors"
           >
-            Retry
+            Reintentar
           </button>
         </div>
       </div>
@@ -1316,75 +261,17 @@ export default function App() {
 
           {/* STORE VIEW */}
           {view === ViewState.STORE && (
-            <div className="px-4 pb-20 pt-8 animate-fade-in-up">
-              {/* Hero Section */}
-              <div className="max-w-7xl mx-auto mb-16 text-center lg:text-left flex flex-col lg:flex-row items-center gap-12">
-                <div className="lg:w-1/2">
-                  <h1 className="text-5xl sm:text-7xl font-heading font-bold mb-6 text-white leading-[0.9]">
-                    Engineer.<br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 to-white">Fabricate.</span>
-                  </h1>
-                  <p className="text-zinc-400 text-lg max-w-xl font-light leading-relaxed mb-8">
-                    Industrial grade 3D parts and assets. Designed for precision, durability, and the future of manufacturing.
-                  </p>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="max-w-7xl mx-auto mb-12 space-y-8">
-                {/* Search Bar */}
-                <div className="relative group max-w-2xl">
-                  <div className="absolute inset-0 bg-blue-500/5 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search catalog..."
-                    className="w-full bg-zinc-900 border border-white/10 rounded-2xl pl-12 pr-6 py-4 focus:bg-zinc-800 focus:border-blue-500/50 outline-none transition-all placeholder:text-zinc-600 font-sans text-base shadow-sm group-hover:shadow-lg"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                {/* Categories */}
-                <div className="flex flex-wrap gap-2.5">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`
-                        px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border
-                        ${selectedCategory === cat
-                          ? 'bg-white text-black border-white shadow-lg shadow-white/10 scale-105'
-                          : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800'}
-                      `}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Product Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-6 lg:gap-8 max-w-7xl mx-auto">
-                {filteredProducts.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onAddToCart={addToCart}
-                    isLiked={wishlist.includes(product.id)}
-                    onToggleLike={toggleWishlist}
-                    onClick={setSelectedProduct}
-                  />
-                ))}
-              </div>
-
-              {filteredProducts.length === 0 && (
-                <div className="text-center py-32 opacity-50">
-                  <Package size={48} className="mx-auto mb-4 text-zinc-600" />
-                  <p className="text-zinc-500 font-sans">No products found matching your search.</p>
-                </div>
-              )}
-            </div>
+            <StoreView
+              products={products}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              addToCart={addToCart}
+              wishlist={wishlist}
+              toggleWishlist={toggleWishlist}
+              setSelectedProduct={setSelectedProduct}
+            />
           )}
 
           {/* FAVORITES VIEW */}
@@ -1395,7 +282,7 @@ export default function App() {
               <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto">
                 <div className="flex items-center gap-4 mb-12">
                   <Heart className="text-rose-500 fill-rose-500" size={32} />
-                  <h2 className="text-4xl font-heading font-bold text-white">Saved Items</h2>
+                  <h2 className="text-4xl font-heading font-bold text-white">Artículos Guardados</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {wishlistProducts.map(product => (
@@ -1411,7 +298,7 @@ export default function App() {
                 </div>
                 {wishlistProducts.length === 0 && (
                   <div className="text-center py-32 text-zinc-500 font-light">
-                    Your wishlist is empty. Start exploring to save items.
+                    Tu lista de deseos está vacía. Comienza a explorar para guardar artículos.
                   </div>
                 )}
               </div>
@@ -1423,173 +310,26 @@ export default function App() {
             !user ? (
               <AuthScreen onLogin={handleLogin} />
             ) : (
-              <div className="max-w-xl mx-auto px-4 py-12 sm:py-20 animate-fade-in-up">
-                <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden text-center group">
-                  {/* Decorative Background */}
-                  <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-600/10 to-transparent"></div>
-
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-black p-1 mb-6 relative shadow-2xl bg-zinc-900 flex items-center justify-center">
-                      <User size={48} className="text-zinc-600" />
-                    </div>
-
-                    <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">{user.name}</h2>
-                    <p className="text-zinc-500 mb-6">{user.email}</p>
-
-                    <div className="grid grid-cols-2 w-full gap-4 mb-6">
-                      <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
-                        <div className="text-3xl font-heading font-bold text-white mb-1">
-                          {orders.filter(o => o.customerEmail === user.email).length}
-                        </div>
-                        <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Orders</div>
-                      </div>
-                      <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
-                        <div className="text-3xl font-heading font-bold text-white mb-1">{wishlist.length}</div>
-                        <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Saved</div>
-                      </div>
-                    </div>
-
-                    <div className="w-full text-left bg-zinc-900/50 rounded-2xl p-6 border border-white/5 mb-8">
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold ml-1 mb-3 block">Saved Shipping Address</label>
-                      <textarea
-                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors resize-none disabled:opacity-50"
-                        rows={3}
-                        placeholder="No address saved yet."
-                        value={user.address || ''}
-                        onChange={async (e) => {
-                          const newAddress = e.target.value;
-                          setUser({ ...user, address: newAddress });
-                        }}
-                      />
-                      <button
-                        onClick={async () => {
-                          try {
-                            const updatedUser = await ApiService.updateProfile({ name: user.name, address: user.address });
-                            setUser(updatedUser);
-                            localStorage.setItem('xyon3d_user', JSON.stringify(updatedUser));
-                            alert('Profile updated successfully!');
-                          } catch (err) {
-                            alert('Failed to update profile');
-                          }
-                        }}
-                        className="mt-4 text-[10px] text-blue-400 font-bold uppercase tracking-widest hover:text-blue-300 transition-colors"
-                      >
-                        Save Address
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setUser(null);
-                        setIsAuthenticated(false);
-                        setCart([]); // Clear cart on sign out
-                        localStorage.removeItem('xyon3d_token');
-                        localStorage.removeItem('xyon3d_user');
-                        setView(ViewState.STORE);
-                      }}
-                      className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-zinc-200 transition-colors shadow-lg uppercase tracking-wide text-sm flex items-center justify-center gap-2"
-                    >
-                      <LogOut size={16} /> Sign Out
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ProfileView
+                user={user}
+                orders={orders}
+                wishlist={wishlist}
+                setUser={setUser}
+                setIsAuthenticated={setIsAuthenticated}
+                setCart={setCart}
+                setView={setView}
+              />
             )
           )}
 
           {/* CART VIEW */}
           {view === ViewState.CART && (
-            <div className="max-w-5xl mx-auto px-4 py-16 animate-fade-in-up">
-              <h2 className="text-4xl font-heading font-bold mb-12 text-white flex items-center gap-3">
-                <ShoppingCart className="text-blue-500" /> Your Cart
-              </h2>
-
-              {cart.length === 0 ? (
-                <div className="text-center py-24 bg-zinc-900/30 rounded-[2rem] border border-white/5 border-dashed">
-                  <Package size={48} className="mx-auto mb-4 text-zinc-700" />
-                  <p className="text-zinc-500">Your cart is currently empty.</p>
-                </div>
-              ) : (
-                <div className="flex flex-col lg:flex-row gap-12">
-                  <div className="flex-grow space-y-4">
-                    {cart.map(item => (
-                      <div key={item.id} className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 flex gap-6 items-center hover:bg-zinc-900 transition-colors">
-                        <div className="w-24 h-24 bg-black rounded-xl overflow-hidden flex-shrink-0 border border-white/5">
-                          <img src={item.imageUrl} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-grow">
-                          <div className="flex justify-between items-start mb-1">
-                            <h3 className="font-bold text-white text-lg">{item.name}</h3>
-                            <p className="text-white font-medium text-lg">${item.price.toFixed(2)}</p>
-                          </div>
-                          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4">{item.category}</p>
-
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center bg-black rounded-lg p-1 border border-white/10">
-                              <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 text-zinc-400 hover:text-white rounded-md transition-colors">-</button>
-                              <span className="font-mono w-8 text-center text-white text-sm">{item.quantity}</span>
-                              <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 text-zinc-400 hover:text-white rounded-md transition-colors">+</button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="w-full lg:w-96">
-                    <div className="glass-card p-6 sm:p-8 rounded-3xl sticky top-24">
-                      <h3 className="text-lg font-bold text-white mb-6 border-b border-white/10 pb-4">Order Summary</h3>
-                      <div className="space-y-3 mb-8">
-                        <div className="flex justify-between text-zinc-400 text-sm">
-                          <span>Subtotal</span>
-                          <span>${cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-zinc-400 text-sm">
-                          <span>Shipping</span>
-                          <span>Free</span>
-                        </div>
-                        <div className="flex justify-between text-xl font-bold text-white pt-4 border-t border-white/10">
-                          <span>Total</span>
-                          <span className="text-blue-400">${cart.reduce((acc, item) => acc + (item.price * item.quantity), 0).toFixed(2)}</span>
-                        </div>
-                      </div>
-
-                      {checkoutStatus === 'success' ? (
-                        <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 text-center animate-fade-in-up">
-                          <ShieldCheck className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                          <h3 className="text-white font-bold text-lg">Order Placed</h3>
-                          <p className="text-zinc-400 text-xs mt-1">Confirmation email sent.</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {/* Only show email input if user is NOT logged in AND hasn't entered an email yet */}
-                          {!user && !checkoutEmail && (
-                            <>
-                              <input
-                                type="email"
-                                placeholder="Email Address for Guest Checkout"
-                                className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white focus:border-blue-500 outline-none transition-colors text-sm"
-                                value={checkoutEmail}
-                                onChange={(e) => setCheckoutEmail(e.target.value)}
-                              />
-                            </>
-                          )}
-
-                          {(user || checkoutEmail) && (
-                            <CheckoutForm
-                              total={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
-                              userEmail={user ? user.email : checkoutEmail}
-                              items={cart}
-                              initialAddress={user?.address}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <CartView
+              cart={cart}
+              user={user}
+              updateQuantity={updateQuantity}
+              checkoutStatus={checkoutStatus}
+            />
           )}
 
           {/* ADMIN VIEW */}
@@ -1602,7 +342,7 @@ export default function App() {
                     <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">
                       <Hexagon size={18} fill="white" />
                     </div>
-                    <h1 className="text-xl font-heading font-bold text-white tracking-tight">Control Center</h1>
+                    <h1 className="text-xl font-heading font-bold text-white tracking-tight">Panel de Control</h1>
                   </div>
                   <button
                     onClick={() => {
@@ -1614,7 +354,7 @@ export default function App() {
                     }}
                     className="px-4 py-2 bg-zinc-900 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-rose-500 transition-colors flex items-center gap-2"
                   >
-                    <LogOut size={14} /> Cerrar SesiÃ³n
+                    <LogOut size={14} /> Cerrar Sesión
                   </button>
                 </div>
 
@@ -1652,7 +392,7 @@ export default function App() {
         }
       </div >
 
-      < Navbar
+      <Navbar
         currentView={view}
         setView={setView}
         cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
@@ -1664,4 +404,3 @@ export default function App() {
     </div >
   );
 }
-

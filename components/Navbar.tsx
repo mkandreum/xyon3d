@@ -19,10 +19,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
 
   const storeTabs = [
-    { id: ViewState.STORE, icon: ShoppingBag, label: 'Store' },
-    { id: ViewState.FAVORITES, icon: Heart, label: 'Saved' },
-    { id: ViewState.CART, icon: ShoppingCart, label: 'Cart', badge: cartCount },
-    { id: ViewState.PROFILE, icon: User, label: 'Profile' },
+    { id: ViewState.STORE, icon: ShoppingBag, label: 'Tienda' },
+    { id: ViewState.FAVORITES, icon: Heart, label: 'Guardados' },
+    { id: ViewState.CART, icon: ShoppingCart, label: 'Carrito', badge: cartCount },
+    { id: ViewState.PROFILE, icon: User, label: 'Perfil' },
   ];
 
   // If we want a toggle for "Secret Admin" while not logged in
@@ -70,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               className={`
-                relative flex items-center justify-center px-3.5 sm:px-5 py-3 rounded-full transition-all duration-300 group
+                relative flex items-center justify-center px-3 sm:px-5 py-3 rounded-full transition-all duration-300 group
                 ${isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}
               `}
             >
