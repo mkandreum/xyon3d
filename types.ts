@@ -30,6 +30,7 @@ export interface Order {
   total: number;
   date: string;
   customerEmail: string;
+  shippingAddress?: string;
   status: 'pending' | 'shipped' | 'delivered';
 }
 

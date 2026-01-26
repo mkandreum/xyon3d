@@ -229,6 +229,16 @@ export const ApiService = {
         return response.json();
     },
 
+    updateProfile: async (data: { name?: string, address?: string }) => {
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to update profile');
+        return response.json();
+    },
+
     createMoneiPayment: async (data: { orderId: string, total: number, customerEmail: string }) => {
         const response = await fetch(`${API_BASE_URL}/create-payment`, {
             method: 'POST',

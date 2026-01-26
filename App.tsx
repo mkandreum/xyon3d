@@ -301,12 +301,18 @@ const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; onLoginSuccess
 
 // 5. Checkout Component
 // 5. Checkout Component (MONEI Hosted)
-const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem[] }> = ({ total, userEmail, items }) => {
+const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem[], initialAddress?: string }> = ({ total, userEmail, items, initialAddress = '' }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [address, setAddress] = useState(initialAddress);
 
   const handleMoneiPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!address.trim()) {
+      setError('Shipping address is required');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -316,7 +322,8 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem
         items: items,
         total: total,
         status: 'pending',
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        shippingAddress: address // Send the selected address
       });
 
       // 2. Create MONEI Payment
@@ -349,6 +356,19 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem
         </div>
 
         <p className="text-zinc-400 mb-6 text-sm">Secure payment via MONEI (Bizum, PayPal, Cards)</p>
+
+        {/* Address Input */}
+        <div className="mb-6 text-left space-y-2">
+          <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold ml-1">Shipping Address</label>
+          <textarea
+            required
+            placeholder="Street, Number, Floor, ZIP Code, City, Country"
+            rows={3}
+            className="w-full bg-zinc-950 border border-white/10 rounded-2xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors resize-none"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </div>
 
         <div className="flex justify-center gap-3 mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
           <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Bizum</div>
@@ -799,6 +819,9 @@ volumes:
                           </span>
                         </div>
                         <p className="text-zinc-400 text-sm mb-1">{order.customerEmail}</p>
+                        {order.shippingAddress && (
+                          <p className="text-zinc-500 text-xs mb-2 italic">📍 {order.shippingAddress}</p>
+                        )}
                         <p className="text-zinc-500 text-xs">{new Date(order.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
 
@@ -1284,7 +1307,7 @@ export default function App() {
                     <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">{user.name}</h2>
                     <p className="text-zinc-500 mb-6">{user.email}</p>
 
-                    <div className="grid grid-cols-2 w-full gap-4 mb-8">
+                    <div className="grid grid-cols-2 w-full gap-4 mb-6">
                       <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
                         <div className="text-3xl font-heading font-bold text-white mb-1">
                           {orders.filter(o => o.customerEmail === user.email).length}
@@ -1295,6 +1318,35 @@ export default function App() {
                         <div className="text-3xl font-heading font-bold text-white mb-1">{wishlist.length}</div>
                         <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Saved</div>
                       </div>
+                    </div>
+
+                    <div className="w-full text-left bg-zinc-900/50 rounded-2xl p-6 border border-white/5 mb-8">
+                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold ml-1 mb-3 block">Saved Shipping Address</label>
+                      <textarea
+                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors resize-none disabled:opacity-50"
+                        rows={3}
+                        placeholder="No address saved yet."
+                        value={user.address || ''}
+                        onChange={async (e) => {
+                          const newAddress = e.target.value;
+                          setUser({ ...user, address: newAddress });
+                        }}
+                      />
+                      <button
+                        onClick={async () => {
+                          try {
+                            const updatedUser = await ApiService.updateProfile({ name: user.name, address: user.address });
+                            setUser(updatedUser);
+                            localStorage.setItem('xyon3d_user', JSON.stringify(updatedUser));
+                            alert('Profile updated successfully!');
+                          } catch (err) {
+                            alert('Failed to update profile');
+                          }
+                        }}
+                        className="mt-4 text-[10px] text-blue-400 font-bold uppercase tracking-widest hover:text-blue-300 transition-colors"
+                      >
+                        Save Address
+                      </button>
                     </div>
 
                     <button
@@ -1399,6 +1451,7 @@ export default function App() {
                               total={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
                               userEmail={user ? user.email : checkoutEmail}
                               items={cart}
+                              initialAddress={user?.address}
                             />
                           )}
                         </div>

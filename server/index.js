@@ -97,6 +97,15 @@ const initDatabase = async () => {
             console.log('ℹ️ Migration note (wishlist):', e.message);
         }
 
+        // 2.8 Migration: Add address to users and shipping_address to orders
+        try {
+            await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT;`);
+            await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;`);
+            console.log('✅ Migration applied: address columns verified');
+        } catch (e) {
+            console.log('ℹ️ Migration note (address):', e.message);
+        }
+
         // 2.6 Migration: Create users table if schema didn't catch it
         try {
             await pool.query(`
@@ -247,7 +256,7 @@ app.post('/api/auth/login', async (req, res) => {
         res.json({
             success: true,
             token,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+            user: { id: user.id, name: user.name, email: user.email, address: user.address, role: user.role }
         });
 
     } catch (error) {
@@ -281,12 +290,38 @@ app.post('/api/auth/register', async (req, res) => {
         res.status(201).json({
             success: true,
             token,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+            user: { id: user.id, name: user.name, email: user.email, address: user.address, role: user.role }
         });
 
     } catch (error) {
         console.error('Registration error details:', error);
         res.status(500).json({ error: 'Registration failed: ' + error.message });
+    }
+});
+
+// Get current user profile
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, email, name, address, role FROM users WHERE id = $1', [req.user.id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch user' });
+    }
+});
+
+// Update user profile
+app.put('/api/auth/profile', authenticateToken, async (req, res) => {
+    try {
+        const { name, address } = req.body;
+        const result = await pool.query(
+            'UPDATE users SET name = $1, address = $2 WHERE id = $3 RETURNING id, email, name, address, role',
+            [name, address, req.user.id]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
@@ -500,9 +535,21 @@ app.post('/api/orders', async (req, res) => {
         }
 
         const result = await client.query(
-            'INSERT INTO orders (customer_email, total, items, status) VALUES ($1, $2, $3, $4) RETURNING id',
-            [customerEmail, total, JSON.stringify(items), 'pending']
+            'INSERT INTO orders (customer_email, total, items, shipping_address, status) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [customerEmail, total, JSON.stringify(items), req.body.shippingAddress || '', 'pending']
         );
+
+        // Update User Address if they are logged in and it's a new address
+        const authHeader = req.headers.authorization;
+        if (authHeader && req.body.shippingAddress) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                await client.query('UPDATE users SET address = $1 WHERE id = $2 AND (address IS NULL OR address = \'\')', [req.body.shippingAddress, decoded.id]);
+            } catch (e) {
+                console.log('ℹ️ Order user update note:', e.message);
+            }
+        }
 
         await client.query('COMMIT');
 
