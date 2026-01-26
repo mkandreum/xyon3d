@@ -429,7 +429,7 @@ app.get('/api/config/monei', async (req, res) => {
 // Create MONEI Payment
 app.post('/api/create-payment', async (req, res) => {
     try {
-        const { items, total, customerEmail } = req.body;
+        const { items, total, customerEmail, orderId } = req.body;
 
         // Get API Key securely from DB
         const result = await pool.query("SELECT value FROM settings WHERE key = 'moneiApiKey'");
@@ -442,16 +442,19 @@ app.post('/api/create-payment', async (req, res) => {
         const monei = new Monei(moneiApiKey);
 
         // Create Payment
+        // Expect orderId from frontend (created via /api/orders first)
+        const orderId = req.body.orderId;
+
         const payment = await monei.payments.create({
             amount: Math.round(total * 100), // In cents
             currency: 'EUR',
-            orderId: `ORDER-${Date.now()}`,
-            description: `Order from ${customerEmail}`,
+            orderId: orderId ? `ORDER-${orderId}` : `ORDER-${Date.now()}`, // Fallback if no ID
+            description: `Order #${orderId} from ${customerEmail}`,
             customer: {
                 email: customerEmail
             },
             callbackUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/api/monei/webhook`,
-            completeUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_success=true`,
+            completeUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_success=true&orderId=${orderId}`,
             cancelUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_cancel=true`
         });
 

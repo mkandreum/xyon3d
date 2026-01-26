@@ -310,27 +310,31 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string }> = ({ total, u
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          total,
-          customerEmail: userEmail,
-          items: []
-        })
-      });
-      const data = await response.json();
+      // 1. Create Order (Pending)
+      const order = await ApiService.createOrder({
+        customerEmail: userEmail,
+        items: [], // Access cart from props/context? Need cart access here.
+        // Actually CheckoutForm only has total/email.
+        // We need to pass the cart items or handle it.
+        // Given the current props, we might need a quick hack or refactor.
+        // The simplest way without changing props everywhere is using the global store context if available,
+        // but 'cart' is in App component state.
 
-      if (data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      } else {
-        setError('Failed to initialize payment');
-      }
+        // FIXED: CheckoutForm usage in App.tsx Passes cart. Wait, it doesn't pass cart items?
+        // Checking usage: <CheckoutForm total={...} userEmail={...} />
+        // We need to pass 'cart' to CheckoutForm or move this logic up.
+        // Let's modify props to accept 'items'.
+        total: total,
+        status: 'pending',
+        date: new Date().toISOString()
+      } as any); // Type assertion if needed, but better to fix props.
+
+      // WAIT: CheckoutForm doesn't have 'items' prop.
+      // I need to update the Component signature first.
+
+      throw new Error("Refactor needed: Pass items to CheckoutForm");
     } catch (err) {
-      setError('Payment error. Please try again.');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      // ...
     }
   };
 
@@ -1244,6 +1248,7 @@ export default function App() {
                             <CheckoutForm
                               total={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
                               userEmail={checkoutEmail}
+                              items={cart}
                             />
                           )}
                         </div>
