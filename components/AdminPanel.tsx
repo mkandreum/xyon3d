@@ -43,15 +43,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setIsGenerating(false);
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imageUrl' | 'modelUrl') => {
         if (e.target.files && e.target.files[0]) {
             setIsUploading(true);
             try {
                 const url = await ApiService.uploadImage(e.target.files[0]);
-                setNewProduct(prev => ({ ...prev, imageUrl: url }));
+                setNewProduct(prev => ({ ...prev, [field]: url }));
             } catch (err) {
                 console.error('Upload failed:', err);
-                alert('Fallo al subir imagen');
+                alert('Fallo al subir archivo');
             } finally {
                 setIsUploading(false);
             }
@@ -166,32 +166,38 @@ volumes:
 
                                 {/* Image Upload UI */}
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="URL Imagen Principal"
-                                            className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                                            value={newProduct.imageUrl}
-                                            onChange={e => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                                        />
-                                        <label className="cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-white p-3.5 rounded-xl border border-white/10 transition-colors">
-                                            {isUploading ? <Loader2 className="animate-spin" size={20} /> : <UploadCloud size={20} />}
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
+                                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Imagen Principal</label>
+                                    <div className="flex items-center gap-4">
+                                        <label className={`flex-grow cursor-pointer bg-zinc-900 hover:bg-zinc-800 border border-white/10 border-dashed rounded-xl p-6 transition-all group ${newProduct.imageUrl ? 'border-blue-500/50 bg-blue-500/5' : ''}`}>
+                                            <div className="flex flex-col items-center justify-center gap-2 text-zinc-400 group-hover:text-white">
+                                                {isUploading ? <Loader2 className="animate-spin" size={24} /> : <UploadCloud size={24} />}
+                                                <span className="text-xs font-bold uppercase tracking-wide">
+                                                    {newProduct.imageUrl ? 'Cambiar Imagen' : 'Subir Imagen'}
+                                                </span>
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'imageUrl')} disabled={isUploading} />
+                                        </label>
+
+                                        {newProduct.imageUrl && (
+                                            <div className="w-24 h-24 bg-black rounded-xl overflow-hidden border border-white/10 shrink-0">
+                                                <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* 3D Model Upload UI */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Modelo 3D (.glb)</label>
+                                    <div className="flex items-center gap-4">
+                                        <label className={`w-full cursor-pointer bg-zinc-900 hover:bg-zinc-800 border border-white/10 border-dashed rounded-xl p-4 transition-all flex items-center justify-center gap-3 ${newProduct.modelUrl ? 'border-green-500/50 bg-green-500/5' : ''}`}>
+                                            {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Box size={20} className={newProduct.modelUrl ? 'text-green-500' : 'text-zinc-500'} />}
+                                            <span className={`text-xs font-bold uppercase tracking-wide ${newProduct.modelUrl ? 'text-green-400' : 'text-zinc-400'}`}>
+                                                {newProduct.modelUrl ? 'Modelo Cargado (Click para cambiar)' : 'Subir Archivo .GLB'}
+                                            </span>
+                                            <input type="file" className="hidden" accept=".glb,.gltf" onChange={(e) => handleFileUpload(e, 'modelUrl')} disabled={isUploading} />
                                         </label>
                                     </div>
-                                    {newProduct.imageUrl && (
-                                        <div className="w-full h-32 bg-black rounded-xl overflow-hidden border border-white/5">
-                                            <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover opacity-80" />
-                                        </div>
-                                    )}
                                 </div>
-                                <input
-                                    type="text"
-                                    placeholder="URL Modelo 3D (.glb)"
-                                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                                    value={newProduct.modelUrl}
-                                    onChange={e => setNewProduct({ ...newProduct, modelUrl: e.target.value })}
-                                />
                                 <textarea
                                     placeholder="URLs Galería (Separadas por línea)"
                                     className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none h-20 resize-none"

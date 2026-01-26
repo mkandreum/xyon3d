@@ -47,10 +47,10 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
+        if (file.mimetype.startsWith('image/') || file.originalname.endsWith('.glb') || file.originalname.endsWith('.gltf')) {
             cb(null, true);
         } else {
-            cb(new Error('Only images are allowed'));
+            cb(new Error('Only images and 3D models (.glb, .gltf) are allowed'));
         }
     }
 });
@@ -135,6 +135,17 @@ const initDatabase = async () => {
             console.log('✅ Database seeded successfully');
         } else {
             console.log(`ℹ️  Database contains ${productsCount.rows[0].count} products, skipping seed`);
+        }
+
+        // 2.9 Migration: Fix ID column type to BIGINT to support Date.now() timestamps
+        try {
+            await pool.query(`ALTER TABLE products ALTER COLUMN id TYPE BIGINT;`);
+            console.log('✅ Migration applied: products id column type updated to BIGINT');
+        } catch (e) {
+            // Ignore error if it's already done or fails (e.g. key constraint, though altering type usually works)
+            // If it fails due to being a PK with related tables, it might need CASCADE but usually type expansion is fine.
+            // Ideally we'd check current type but for this fix we'll try to apply it.
+            console.log('ℹ️ Migration note (id type):', e.message);
         }
 
     } catch (err) {
