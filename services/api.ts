@@ -88,7 +88,13 @@ export const ApiService = {
         const response = await fetch(`${API_BASE_URL}/orders`);
         if (!response.ok) throw new Error('Failed to fetch orders');
         const data = await response.json();
-        return data.map((o: any) => ({ ...o, id: o.id.toString() }));
+        return data.map((o: any) => ({
+            ...o,
+            id: o.id.toString(),
+            total: typeof o.total === 'string' ? parseFloat(o.total) : o.total,
+            // Ensure items is parsed if string
+            items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
+        }));
     },
 
     createOrder: async (order: Omit<Order, 'id'>): Promise<Order> => {

@@ -801,9 +801,7 @@ export default function App() {
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Stripe State
-  // const [stripePromise, setStripePromise] = useState<any>(null); // Removed for MONEI
-  // const [clientSecret, setClientSecret] = useState('');
+  // Load initial data from API
 
   // Load initial data from API
   useEffect(() => {
@@ -811,8 +809,8 @@ export default function App() {
       try {
         setLoading(true);
         // Check for existing user session
-        const token = localStorage.getItem('polyform_token');
-        const savedUser = localStorage.getItem('polyform_user');
+        const token = localStorage.getItem('xyon3d_token');
+        const savedUser = localStorage.getItem('xyon3d_user');
         if (token && savedUser) {
           setUser(JSON.parse(savedUser));
         }
@@ -841,12 +839,6 @@ export default function App() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    if (logoClicks >= 10) {
-      setAdminVisible(true);
-      setLogoClicks(0);
-    }
-  }, [logoClicks]);
 
   const categories = useMemo(() => {
     const cats = new Set(products.map(p => p.category));
@@ -1011,8 +1003,8 @@ export default function App() {
             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white text-black flex items-center justify-center rounded-lg">
               <Hexagon size={16} className="sm:w-[18px] sm:h-[18px]" fill="black" />
             </div>
-            <span className="hidden sm:inline">{settings.storeName}</span>
-            <span className="sm:hidden">PolyForm</span>
+            <span className="hidden sm:inline">{settings.storeName || 'Xyon3D'}</span>
+            <span className="sm:hidden">Xyon3D</span>
           </button>
 
           <div className="flex items-center gap-2 sm:gap-4">
@@ -1274,7 +1266,11 @@ export default function App() {
                 onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
               />
             ) : (
-              <LoginScreen onLogin={() => setIsAuthenticated(true)} />
+              <LoginScreen onLogin={(user, token) => {
+                setUser(user);
+                setIsAuthenticated(true);
+                // Token stored inside LoginScreen but state needs sync
+              }} />
             )
           )}
 

@@ -134,15 +134,99 @@ app.get('/api/health', (req, res) => {
 
 // -------------------- AUTHENTICATION --------------------
 
-// Admin login
-app.post('/api/auth/login', (req, res) => {
-    const { password } = req.body;
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
+// Admin 2FA Code from Env
+const ADMIN_2FA_CODE = process.env.ADMIN_2FA_CODE || '123456'; // Default for dev, set in Prod!
 
-    if (password === adminPassword) {
-        res.json({ success: true, message: 'Authentication successful' });
-    } else {
-        res.status(401).json({ success: false, message: 'Invalid password' });
+// Login Endpoint
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password, code } = req.body;
+
+    try {
+        // 1. Check for Super Admin (Env Var based)
+        const adminEmail = process.env.ADMIN_EMAIL || 'admin@xyon3d.com';
+        const adminPass = process.env.ADMIN_PASSWORD || 'admin';
+
+        if (email === adminEmail) {
+            if (password === adminPass) {
+                // Check 2FA
+                if (code) {
+                    if (code === ADMIN_2FA_CODE) {
+                        const token = jwt.sign({ id: 'admin', role: 'admin', email: adminEmail }, JWT_SECRET, { expiresIn: '24h' });
+                        return res.json({
+                            success: true,
+                            token,
+                            user: { id: 'admin', name: 'Administrator', email: adminEmail, role: 'admin' }
+                        });
+                    } else {
+                        return res.status(401).json({ error: 'Invalid 2FA Code' });
+                    }
+                } else {
+                    // Tell frontend 2FA is required
+                    return res.status(200).json({ require2fa: true });
+                }
+            } else {
+                return res.status(401).json({ error: 'Invalid credentials' });
+            }
+        }
+
+        // 2. Check Database Users
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const user = result.rows[0];
+        const validPassword = await bcrypt.compare(password, user.password_hash);
+
+        if (!validPassword) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+
+        res.json({
+            success: true,
+            token,
+            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+// Register Endpoint
+app.post('/api/auth/register', async (req, res) => {
+    const { email, password, name } = req.body;
+
+    try {
+        // Check if user exists
+        const check = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (check.rows.length > 0) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const result = await pool.query(
+            'INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role',
+            [email, hashedPassword, name, 'user']
+        );
+
+        const user = result.rows[0];
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+
+        res.status(201).json({
+            success: true,
+            token,
+            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Registration failed' });
     }
 });
 
