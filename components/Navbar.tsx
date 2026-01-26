@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, ShoppingCart, Settings, Lock, Heart, User, Box, Database, LogOut } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Settings, Lock, Heart, User, Box, Database, LogOut, Package } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface NavbarProps {
@@ -25,40 +25,44 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: ViewState.PROFILE, icon: User, label: 'Profile' },
   ];
 
-  if (isAdminVisible || isAuthenticated) {
+  // If we want a toggle for "Secret Admin" while not logged in
+  if (isAdminVisible && !isAuthenticated) {
     storeTabs.push({
       id: ViewState.ADMIN,
-      icon: isAuthenticated ? Settings : Lock,
+      icon: Lock,
       label: 'Admin'
     });
   }
 
   const adminTabs = [
+    { id: ViewState.STORE, icon: ShoppingBag, label: 'Ver Web' },
     { id: 'products', icon: Box, label: 'Artículos' },
-    { id: 'orders', icon: ShoppingBag, label: 'Pedidos' },
+    { id: 'orders', icon: Package, label: 'Pedidos' },
     { id: 'settings', icon: Settings, label: 'Tienda' },
     { id: 'system', icon: Database, label: 'Docker' },
-    { id: 'exit', icon: LogOut, label: 'Salir' },
   ];
 
-  // Decide which tabs to show
-  const showAdminNav = currentView === ViewState.ADMIN && isAuthenticated;
+  // Decide which tabs to show: If logged in as Admin, show management bar
+  const showAdminNav = isAuthenticated;
   const tabs = showAdminNav ? adminTabs : storeTabs;
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-auto animate-fade-in-up">
       <nav className="glass-nav rounded-full px-2 py-2 flex items-center justify-center shadow-2xl">
         {tabs.map((tab) => {
-          const isActive = showAdminNav ? (activeAdminTab === tab.id) : (currentView === tab.id);
+          const isActive = showAdminNav
+            ? (tab.id === ViewState.STORE ? (currentView === ViewState.STORE) : (currentView === ViewState.ADMIN && activeAdminTab === tab.id))
+            : (currentView === tab.id);
 
           return (
             <button
               key={tab.id}
               onClick={() => {
                 if (showAdminNav) {
-                  if (tab.id === 'exit') {
+                  if (tab.id === ViewState.STORE) {
                     setView(ViewState.STORE);
                   } else {
+                    setView(ViewState.ADMIN);
                     onAdminTabChange(tab.id);
                   }
                 } else {
@@ -66,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               className={`
-                relative flex items-center justify-center px-4 sm:px-5 py-3 rounded-full transition-all duration-300 group
+                relative flex items-center justify-center px-3.5 sm:px-5 py-3 rounded-full transition-all duration-300 group
                 ${isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}
               `}
             >

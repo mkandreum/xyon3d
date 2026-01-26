@@ -897,7 +897,8 @@ export default function App() {
   const [view, setView] = useState<ViewState>(ViewState.STORE);
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<AppSettings>({
-    storeName: 'Loading...', smtpHost: '', smtpUser: '', smtpPass: '', adminEmail: ''
+    storeName: 'Loading...', smtpHost: '', smtpUser: '', smtpPass: '', adminEmail: '',
+    moneiAccountId: '', moneiApiKey: ''
   });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -987,7 +988,10 @@ export default function App() {
     localStorage.setItem('xyon3d_token', token);
     localStorage.setItem('xyon3d_user', JSON.stringify(userData));
     setUser(userData);
-    if (userData.role === 'admin') setIsAuthenticated(true);
+    if (userData.role === 'admin') {
+      setIsAuthenticated(true);
+      setView(ViewState.ADMIN);
+    }
     refreshData(); // Refresh protected data like orders/wishlist
   };
 
@@ -1466,10 +1470,16 @@ export default function App() {
                     <h1 className="text-xl font-heading font-bold text-white tracking-tight">Control Center</h1>
                   </div>
                   <button
-                    onClick={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
-                    className="px-4 py-2 bg-zinc-900 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-colors"
+                    onClick={() => {
+                      setUser(null);
+                      setIsAuthenticated(false);
+                      localStorage.removeItem('xyon3d_token');
+                      localStorage.removeItem('xyon3d_user');
+                      setView(ViewState.STORE);
+                    }}
+                    className="px-4 py-2 bg-zinc-900 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-rose-500 transition-colors flex items-center gap-2"
                   >
-                    Exit Admin
+                    <LogOut size={14} /> Cerrar Sesión
                   </button>
                 </div>
 
