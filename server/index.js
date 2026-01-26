@@ -2,12 +2,15 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const path = require('path');
-const multer = require('multer'); // Import multer
+const multer = require('multer');
 const fs = require('fs');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'polyform_secret_key_change_me';
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -68,6 +71,23 @@ const initDatabase = async () => {
             console.log('✅ Migration applied: stock column verified');
         } catch (e) {
             console.log('ℹ️ Migration note:', e.message);
+        }
+
+        // 2.6 Migration: Create users table if schema didn't catch it
+        try {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    name VARCHAR(100),
+                    role VARCHAR(20) DEFAULT 'user',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            console.log('✅ Migration applied: users table verified');
+        } catch (e) {
+            console.log('ℹ️ Migration note (users):', e.message);
         }
 
         console.log('✅ Database schema verified/applied');

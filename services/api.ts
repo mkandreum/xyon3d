@@ -12,9 +12,13 @@ const getSessionId = () => {
     return sessionId;
 };
 
-const headers = {
-    'Content-Type': 'application/json',
-    'X-Session-ID': getSessionId(),
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('polyform_token');
+    return {
+        'Content-Type': 'application/json',
+        'X-Session-ID': getSessionId(),
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
 };
 
 export const ApiService = {
@@ -39,7 +43,7 @@ export const ApiService = {
 
         const response = await fetch(url, {
             method,
-            headers,
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 name: product.name,
                 description: product.description,
@@ -59,9 +63,23 @@ export const ApiService = {
     deleteProduct: async (id: string): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/products/${id}`, {
             method: 'DELETE',
-            headers,
+            headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to delete product');
+    },
+
+    uploadImage: async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`${API_BASE_URL}/upload`, {
+            method: 'POST',
+            body: formData, // No headers needed, fetch handles multipart/form-data
+        });
+
+        if (!response.ok) throw new Error('Failed to upload image');
+        const data = await response.json();
+        return data.url;
     },
 
     // ==================== ORDERS ====================
@@ -76,7 +94,7 @@ export const ApiService = {
     createOrder: async (order: Omit<Order, 'id'>): Promise<Order> => {
         const response = await fetch(`${API_BASE_URL}/orders`, {
             method: 'POST',
-            headers,
+            headers: getAuthHeaders(),
             body: JSON.stringify(order),
         });
         if (!response.ok) throw new Error('Failed to create order');
@@ -87,7 +105,7 @@ export const ApiService = {
     updateOrderStatus: async (id: string, status: 'pending' | 'shipped' | 'delivered'): Promise<Order> => {
         const response = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
             method: 'PATCH',
-            headers,
+            headers: getAuthHeaders(),
             body: JSON.stringify({ status }),
         });
         if (!response.ok) throw new Error('Failed to update order status');
@@ -106,7 +124,7 @@ export const ApiService = {
     saveSettings: async (settings: AppSettings): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/settings`, {
             method: 'PUT',
-            headers,
+            headers: getAuthHeaders(),
             body: JSON.stringify(settings),
         });
         if (!response.ok) throw new Error('Failed to save settings');
@@ -115,7 +133,7 @@ export const ApiService = {
     // ==================== WISHLIST ====================
 
     getWishlist: async (): Promise<string[]> => {
-        const response = await fetch(`${API_BASE_URL}/wishlist`, { headers });
+        const response = await fetch(`${API_BASE_URL}/wishlist`, { headers: getAuthHeaders() });
         if (!response.ok) throw new Error('Failed to fetch wishlist');
         const data = await response.json();
         return data.map((id: number) => id.toString());
@@ -130,7 +148,7 @@ export const ApiService = {
     addToWishlist: async (productId: string): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/wishlist`, {
             method: 'POST',
-            headers,
+            headers: getAuthHeaders(),
             body: JSON.stringify({ productId: parseInt(productId) }),
         });
         if (!response.ok) throw new Error('Failed to add to wishlist');
@@ -139,7 +157,7 @@ export const ApiService = {
     removeFromWishlist: async (productId: string): Promise<void> => {
         const response = await fetch(`${API_BASE_URL}/wishlist/${productId}`, {
             method: 'DELETE',
-            headers,
+            headers: getAuthHeaders(),
         });
         if (!response.ok) throw new Error('Failed to remove from wishlist');
     },
@@ -156,4 +174,38 @@ export const ApiService = {
         if (!response.ok) throw new Error('Failed to fetch analytics');
         return response.json();
     },
+
+    // ==================== AUTH ====================
+
+    register: async (data: any) => {
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Registration failed');
+        }
+        return response.json();
+    },
+
+    loginUser: async (data: any) => {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Login failed');
+        }
+        return response.json();
+    },
+
+    getUserProfile: async () => {
+        // Profile endpoint not yet implemented in backend, mocking for now or skipping
+        // Real implementation would verify token
+        return { message: 'Profile fetch placeholder' };
+    }
 };
