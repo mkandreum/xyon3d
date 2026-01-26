@@ -360,12 +360,12 @@ export default function App() {
             isAuthenticated ? (
               <div className="min-h-screen bg-black animate-fade-in">
                 {/* Custom Minimal Header for Admin */}
-                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-950/50 backdrop-blur-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">
-                      <Hexagon size={18} fill="white" />
+                <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center gap-8 bg-zinc-950/50 backdrop-blur-xl">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                      <Hexagon size={20} fill="white" />
                     </div>
-                    <h1 className="text-xl font-heading font-bold text-white tracking-tight">Panel de Control</h1>
+                    <h1 className="text-2xl font-heading font-bold text-white tracking-tight">Panel de Control</h1>
                   </div>
                   <button
                     onClick={() => {
