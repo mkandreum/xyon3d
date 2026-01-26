@@ -433,9 +433,16 @@ app.get('/api/orders', async (req, res) => {
 // Create order
 app.post('/api/orders', async (req, res) => {
     const client = await pool.connect();
+    const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const { items, customerEmail, total } = req.body;
+
+        console.log('📦 Creating Order:', { customerEmail, total, itemCount: items?.length });
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            throw new Error('Order must contain items');
+        }
 
         // Verify stock for all items
         for (const item of items) {
