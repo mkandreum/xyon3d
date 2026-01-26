@@ -210,8 +210,14 @@ export const ApiService = {
     },
 
     getUserProfile: async () => {
-        // Profile endpoint not yet implemented in backend, mocking for now or skipping
-        return { message: 'Profile fetch placeholder' };
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) {
+            if (response.status === 401) throw new Error('Unauthorized');
+            throw new Error('Failed to fetch profile');
+        }
+        return response.json();
     },
 
     createMoneiPayment: async (data: { orderId: string, total: number, customerEmail: string }) => {

@@ -10,6 +10,9 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { Monei } from '@monei-js/node-sdk';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -134,6 +137,21 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadsDir));
+
+// Security Middleware
+app.use(helmet({
+    contentSecurityPolicy: false, // Disabled for simplicity with external images/scripts in this specific case, refine for stricter prod
+}));
+app.use(compression());
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', apiLimiter);
 
 // ==================== API ROUTES ====================
 
