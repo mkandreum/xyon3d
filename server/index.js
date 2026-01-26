@@ -6,6 +6,7 @@ const multer = require('multer');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -259,6 +260,50 @@ app.delete('/api/products/:id', async (req, res) => {
     }
 });
 
+// -------------------- EMAIL SERVICE --------------------
+
+const sendEmail = async (to, subject, html) => {
+    try {
+        // Fetch SMTP settings from DB
+        const result = await pool.query('SELECT value FROM settings WHERE key IN (\'smtpHost\', \'smtpUser\', \'smtpPass\')');
+        const settings = {};
+        result.rows.forEach(row => {
+            // This is simplified; in a real app query properly
+        });
+
+        // Better query for settings table structure (key/value pairs)
+        const settingsRes = await pool.query('SELECT key, value FROM settings');
+        settingsRes.rows.forEach(row => settings[row.key] = row.value);
+
+        if (!settings.smtpHost || !settings.smtpUser || !settings.smtpPass) {
+            console.warn('⚠️ SMTP settings incomplete. Email not sent.');
+            return;
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: settings.smtpHost,
+            port: 587,
+            secure: false,
+            auth: {
+                user: settings.smtpUser,
+                pass: settings.smtpPass,
+            },
+        });
+
+        const mailOptions = {
+            from: `"PolyForm Store" <${settings.smtpUser}>`,
+            to,
+            subject,
+            html,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('📧 Email sent: %s', info.messageId);
+    } catch (error) {
+        console.error('❌ Error sending email:', error);
+    }
+};
+
 // -------------------- ORDERS --------------------
 
 // Get all orders
@@ -276,24 +321,58 @@ app.get('/api/orders', async (req, res) => {
 
 // Create order
 app.post('/api/orders', async (req, res) => {
+    const client = await pool.connect();
     try {
-        const { customerEmail, total, items } = req.body;
+        await client.query('BEGIN');
+        const { items, customerEmail, total } = req.body;
 
-        if (!customerEmail || !total || !items || items.length === 0) {
-            return res.status(400).json({ error: 'Customer email, total, and items are required' });
+        // Verify stock for all items
+        for (const item of items) {
+            const productRes = await client.query('SELECT stock FROM products WHERE id = $1', [item.id]);
+            if (productRes.rows.length === 0) {
+                throw new Error(`Product ${item.name} not found`);
+            }
+            if (productRes.rows[0].stock < item.quantity) {
+                throw new Error(`Insufficient stock for ${item.name}`);
+            }
         }
 
-        const result = await pool.query(
-            `INSERT INTO orders (customer_email, total, items, status) 
-       VALUES ($1, $2, $3, $4) 
-       RETURNING id, customer_email as "customerEmail", total, status, items, created_at as "date"`,
+        // Decrement stock
+        for (const item of items) {
+            await client.query('UPDATE products SET stock = stock - $1 WHERE id = $2', [item.quantity, item.id]);
+        }
+
+        const result = await client.query(
+            'INSERT INTO orders (customer_email, total, items, status) VALUES ($1, $2, $3, $4) RETURNING id',
             [customerEmail, total, JSON.stringify(items), 'pending']
         );
 
-        res.status(201).json(result.rows[0]);
+        await client.query('COMMIT');
+
+        // Send Confirmation Email
+        const emailHtml = `
+            <h1>Order Confirmed! 🚀</h1>
+            <p>Thank you for your order, ID: <strong>#${result.rows[0].id}</strong></p>
+            <h3>Summary:</h3>
+            <ul>
+                ${items.map(i => `<li>${i.name} x${i.quantity} - $${(i.price * i.quantity).toFixed(2)}</li>`).join('')}
+            </ul>
+            <p><strong>Total: $${total.toFixed(2)}</strong></p>
+            <p>We will notify you when your order is shipped.</p>
+        `;
+        sendEmail(customerEmail, `Order Confirmation #${result.rows[0].id}`, emailHtml);
+
+        res.status(201).json({
+            id: result.rows[0].id,
+            message: 'Order created successfully'
+        });
+
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error creating order:', error);
-        res.status(500).json({ error: 'Failed to create order' });
+        res.status(500).json({ error: error.message || 'Failed to create order' });
+    } finally {
+        client.release();
     }
 });
 
@@ -303,18 +382,25 @@ app.patch('/api/orders/:id/status', async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        if (!['pending', 'shipped', 'delivered'].includes(status)) {
-            return res.status(400).json({ error: 'Invalid status. Must be pending, shipped, or delivered' });
-        }
+        // Get order email first
+        const orderRes = await pool.query('SELECT customer_email FROM orders WHERE id = $1', [id]);
+        if (orderRes.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+        const customerEmail = orderRes.rows[0].customer_email;
 
         const result = await pool.query(
-            `UPDATE orders SET status = $1 WHERE id = $2 
-       RETURNING id, customer_email as "customerEmail", total, status, items, created_at as "date"`,
+            'UPDATE orders SET status = $1 WHERE id = $2 RETURNING id, status, customer_email as "customerEmail", total, items, created_at as "date"',
             [status, id]
         );
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Order not found' });
+        // Send Status Update Email
+        if (['shipped', 'delivered'].includes(status)) {
+            const subject = status === 'shipped' ? `Order #${id} Shipped! 🚚` : `Order #${id} Delivered! 📦`;
+            const html = `
+                <h1>Update on Order #${id}</h1>
+                <p>Your order status is now: <strong style="text-transform:uppercase;">${status}</strong></p>
+                <p>Track your order or view details in your account.</p>
+            `;
+            sendEmail(customerEmail, subject, html);
         }
 
         res.json(result.rows[0]);
