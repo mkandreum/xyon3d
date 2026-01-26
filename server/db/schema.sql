@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS products (
     image_url TEXT,
     model_url TEXT,
     gallery JSONB DEFAULT '[]'::jsonb,
+    stock INTEGER DEFAULT 10,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

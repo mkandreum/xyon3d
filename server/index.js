@@ -59,6 +59,17 @@ const initDatabase = async () => {
         const schemaPath = path.join(__dirname, 'db/schema.sql');
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
         await pool.query(schemaSql);
+
+        // 2.5 Migration: Add stock column if not exists (for existing dbs)
+        try {
+            await pool.query(`
+                ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 10;
+            `);
+            console.log('✅ Migration applied: stock column verified');
+        } catch (e) {
+            console.log('ℹ️ Migration note:', e.message);
+        }
+
         console.log('✅ Database schema verified/applied');
 
         // 3. Seed Data (Only if products table is empty)

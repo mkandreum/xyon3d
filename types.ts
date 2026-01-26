@@ -7,6 +7,7 @@ export interface Product {
   category: string;
   gallery?: string[]; // Array of image URLs
   modelUrl?: string; // URL to .glb/.gltf file
+  stock?: number;
 }
 
 export interface CartItem extends Product {
