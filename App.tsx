@@ -900,6 +900,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Scroll to top on view change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view]);
+
   // Auth & Admin Secret State
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Admin auth
   const [user, setUser] = useState<any>(null); // Customer auth
