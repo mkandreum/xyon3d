@@ -20,8 +20,8 @@ export interface AppSettings {
   smtpUser: string;
   smtpPass: string; // Stored locally for demo purposes
   adminEmail: string;
-  stripePublishableKey?: string;
-  stripeSecretKey?: string;
+  moneiAccountId?: string;
+  moneiApiKey?: string;
 }
 
 export interface Order {
