@@ -283,6 +283,23 @@ const AdminPanel: React.FC<{
     setIsGenerating(false);
   };
 
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsUploading(true);
+      try {
+        const url = await ApiService.uploadImage(e.target.files[0]);
+        setNewProduct(prev => ({ ...prev, imageUrl: url }));
+      } catch (err) {
+        console.error('Upload failed:', err);
+        alert('Failed to upload image');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   const handleProductSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newProduct.name && newProduct.price) {
@@ -305,12 +322,11 @@ const AdminPanel: React.FC<{
 services:
   app:
     build: .
-    ports:
-      - "3000:3000"
+    labels:
+      - "coolify.managed=true"
+      - "coolify.port=3000"
     environment:
       - DATABASE_URL=postgres://${localSettings.smtpUser}:${localSettings.smtpPass}@db:5432/polyform
-    depends_on:
-      - db
     restart: always
 
   db:
@@ -397,14 +413,28 @@ volumes:
                     {isGenerating ? 'Thinking...' : 'AI Generate'}
                   </button>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Main Image URL"
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
-                  value={newProduct.imageUrl}
-                  onChange={e => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                />
-                <input
+
+                {/* Image Upload UI */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Main Image URL"
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
+                      value={newProduct.imageUrl}
+                      onChange={e => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
+                    />
+                    <label className="cursor-pointer bg-zinc-800 hover:bg-zinc-700 text-white p-3.5 rounded-xl border border-white/10 transition-colors">
+                      {isUploading ? <Loader2 className="animate-spin" size={20} /> : <UploadCloud size={20} />}
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
+                    </label>
+                  </div>
+                  {newProduct.imageUrl && (
+                    <div className="w-full h-32 bg-black rounded-xl overflow-hidden border border-white/5">
+                      <img src={newProduct.imageUrl} alt="Preview" className="w-full h-full object-cover opacity-80" />
+                    </div>
+                  )}
+                </div>                <input
                   type="text"
                   placeholder="3D Model URL (.glb)"
                   className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
