@@ -24,8 +24,12 @@ export const ApiService = {
         const response = await fetch(`${API_BASE_URL}/products`);
         if (!response.ok) throw new Error('Failed to fetch products');
         const data = await response.json();
-        // Convert id to string for compatibility
-        return data.map((p: any) => ({ ...p, id: p.id.toString() }));
+        // Convert id to string and price to number for compatibility
+        return data.map((p: any) => ({
+            ...p,
+            id: p.id.toString(),
+            price: typeof p.price === 'string' ? parseFloat(p.price) : p.price
+        }));
     },
 
     saveProduct: async (product: Product): Promise<Product> => {
