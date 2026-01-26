@@ -930,26 +930,44 @@ export default function App() {
         const token = localStorage.getItem('xyon3d_token');
         const savedUser = localStorage.getItem('xyon3d_user');
         if (token && savedUser) {
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          if (parsedUser.role === 'admin') setIsAuthenticated(true);
         }
 
-        const [productsData, settingsData, ordersData, wishlistData] = await Promise.all([
-          ApiService.getProducts(),
-          ApiService.getSettings(),
-          ApiService.getOrders(),
-          ApiService.getWishlist(),
+        // Fetch products (Critical)
+        try {
+          const productsData = await ApiService.getProducts();
+          setProducts(productsData);
+        } catch (err) {
+          console.error('Error loading products:', err);
+          setError('Failed to load products. Please check your connection.');
+          return; // Stop if products fail
+        }
+
+        // Fetch other data (Non-critical, handle 401s)
+        const safeFetch = async (fetchFn: () => Promise<any>, setter: (data: any) => void) => {
+          try {
+            const data = await fetchFn();
+            setter(data);
+          } catch (err: any) {
+            // Ignore 401 errors as they are expected when not logged in
+            if (err.message !== 'Unauthorized') {
+              console.warn('Non-critical fetch failed:', err);
+            }
+          }
+        };
+
+        await Promise.all([
+          safeFetch(ApiService.getSettings, setSettings),
+          safeFetch(ApiService.getOrders, setOrders),
+          safeFetch(ApiService.getWishlist, setWishlist),
         ]);
-        setProducts(productsData);
-        setSettings(settingsData);
-        setOrders(ordersData);
-        setWishlist(wishlistData);
+
         setError(null);
-
-
-
       } catch (err) {
-        console.error('Error loading data:', err);
-        setError('Failed to load data. Please check your connection.');
+        console.error('Unexpected error loading initialization data:', err);
+        setError('An unexpected error occurred.');
       } finally {
         setLoading(false);
       }

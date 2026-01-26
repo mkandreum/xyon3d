@@ -85,8 +85,11 @@ export const ApiService = {
     // ==================== ORDERS ====================
 
     getOrders: async (): Promise<Order[]> => {
-        const response = await fetch(`${API_BASE_URL}/orders`);
-        if (!response.ok) throw new Error('Failed to fetch orders');
+        const response = await fetch(`${API_BASE_URL}/orders`, { headers: getAuthHeaders() });
+        if (!response.ok) {
+            if (response.status === 401) throw new Error('Unauthorized');
+            throw new Error('Failed to fetch orders');
+        }
         const data = await response.json();
         return data.map((o: any) => ({
             ...o,
@@ -122,8 +125,11 @@ export const ApiService = {
     // ==================== SETTINGS ====================
 
     getSettings: async (): Promise<AppSettings> => {
-        const response = await fetch(`${API_BASE_URL}/settings`);
-        if (!response.ok) throw new Error('Failed to fetch settings');
+        const response = await fetch(`${API_BASE_URL}/settings`, { headers: getAuthHeaders() });
+        if (!response.ok) {
+            if (response.status === 401) throw new Error('Unauthorized');
+            throw new Error('Failed to fetch settings');
+        }
         return response.json();
     },
 
@@ -176,8 +182,11 @@ export const ApiService = {
         totalRevenue: number;
         ordersByStatus: Record<string, number>;
     }> => {
-        const response = await fetch(`${API_BASE_URL}/analytics`);
-        if (!response.ok) throw new Error('Failed to fetch analytics');
+        const response = await fetch(`${API_BASE_URL}/analytics`, { headers: getAuthHeaders() });
+        if (!response.ok) {
+            if (response.status === 401) throw new Error('Unauthorized');
+            throw new Error('Failed to fetch analytics');
+        }
         return response.json();
     },
 
