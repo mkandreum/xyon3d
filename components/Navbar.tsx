@@ -11,11 +11,12 @@ interface NavbarProps {
   // Sub-tabs for Admin
   activeAdminTab: string;
   onAdminTabChange: (tab: any) => void;
+  user: any;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView, setView, cartCount, isAuthenticated, isAdminVisible,
-  activeAdminTab, onAdminTabChange
+  activeAdminTab, onAdminTabChange, user
 }) => {
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const navRef = useRef<HTMLDivElement>(null);
@@ -23,7 +24,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const storeTabs = [
     { id: ViewState.STORE, icon: ShoppingBag, label: 'Tienda' },
-    { id: ViewState.FAVORITES, icon: Heart, label: 'Guardados' },
+    // Only show Favorites if logged in
+    ...(user ? [{ id: ViewState.FAVORITES, icon: Heart, label: 'Guardados' }] : []),
     { id: ViewState.CART, icon: ShoppingCart, label: 'Carrito', badge: cartCount },
     { id: ViewState.PROFILE, icon: User, label: 'Perfil' },
   ];

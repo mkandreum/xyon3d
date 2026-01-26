@@ -128,6 +128,14 @@ export default function App() {
 
   const toggleWishlist = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+
+    // Redirect to Login if not authenticated
+    if (!user) {
+      setView(ViewState.PROFILE);
+      showNotification('Inicia sesión para guardar tus favoritos', 'info');
+      return;
+    }
+
     try {
       const isLiked = wishlist.includes(id);
       if (isLiked) {
@@ -136,6 +144,7 @@ export default function App() {
       } else {
         await ApiService.addToWishlist(id);
         setWishlist(prev => [...prev, id]);
+        showNotification('Añadido a guardados', 'success');
       }
     } catch (err) {
       console.error('Error toggling wishlist:', err);
@@ -423,6 +432,7 @@ export default function App() {
         isAdminVisible={adminVisible}
         activeAdminTab={activeAdminTab}
         onAdminTabChange={setActiveAdminTab}
+        user={user}
       />
     </div >
   );
