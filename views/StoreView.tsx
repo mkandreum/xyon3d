@@ -42,19 +42,6 @@ export const StoreView: React.FC<StoreViewProps> = ({
 
     return (
         <div className="px-4 pb-20 pt-8 animate-fade-in-up">
-            {/* Hero Section */}
-            <div className="max-w-7xl mx-auto mb-16 text-center lg:text-left flex flex-col lg:flex-row items-center gap-12">
-                <div className="lg:w-1/2">
-                    <h1 className="text-5xl sm:text-7xl font-heading font-bold mb-6 text-white leading-[0.9]">
-                        Diseña.<br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-500 to-white">Fabrica.</span>
-                    </h1>
-                    <p className="text-zinc-400 text-lg max-w-xl font-light leading-relaxed mb-8">
-                        Partes y activos 3D de grado industrial. Diseñados para precisión, durabilidad y el futuro de la manufactura.
-                    </p>
-                </div>
-            </div>
-
             {/* Filters */}
             <div className="max-w-7xl mx-auto mb-12 space-y-8">
                 {/* Search Bar */}
