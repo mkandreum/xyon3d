@@ -14,6 +14,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { StoreView } from './views/StoreView';
 import { CartView } from './views/CartView';
 import { ProfileView } from './views/ProfileView';
+import { NotificationBanner, NotificationType } from './components/NotificationBanner';
 
 export default function App() {
   const [view, setView] = useState<ViewState>(ViewState.STORE);
@@ -27,6 +28,12 @@ export default function App() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Notification State
+  const [notification, setNotification] = useState<{ message: string, type: NotificationType } | null>(null);
+  const showNotification = (message: string, type: NotificationType = 'info') => {
+    setNotification({ message, type });
+  };
 
   // Scroll to top on view change
   useEffect(() => {
@@ -144,6 +151,7 @@ export default function App() {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
+    showNotification(`Añadido al carrito: ${product.name}`, 'success');
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -160,10 +168,10 @@ export default function App() {
     try {
       await ApiService.saveSettings(newSettings);
       setSettings(newSettings);
-      alert("Configuración del Sistema Actualizada");
+      showNotification("Configuración del Sistema Actualizada", 'success');
     } catch (err) {
       console.error('Error saving settings:', err);
-      alert('Fallo al guardar la configuración');
+      showNotification('Fallo al guardar la configuración', 'error');
     }
   };
 
@@ -171,9 +179,10 @@ export default function App() {
     try {
       await ApiService.saveProduct(p);
       setProducts(await ApiService.getProducts());
+      showNotification('Producto creado correctamente', 'success');
     } catch (err) {
       console.error('Error adding product:', err);
-      alert('Fallo al añadir producto');
+      showNotification('Fallo al añadir producto', 'error');
     }
   };
 
@@ -181,9 +190,10 @@ export default function App() {
     try {
       await ApiService.deleteProduct(id);
       setProducts(await ApiService.getProducts());
+      showNotification('Producto eliminado', 'info');
     } catch (err) {
       console.error('Error deleting product:', err);
-      alert('Fallo al eliminar producto');
+      showNotification('Fallo al eliminar producto', 'error');
     }
   };
 
@@ -259,19 +269,28 @@ export default function App() {
 
         <main className="flex-grow">
 
+          <NotificationBanner
+            isVisible={!!notification}
+            message={notification?.message || ''}
+            type={notification?.type || 'info'}
+            onClose={() => setNotification(null)}
+          />
+
           {/* STORE VIEW */}
           {view === ViewState.STORE && (
-            <StoreView
-              products={products}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              addToCart={addToCart}
-              wishlist={wishlist}
-              toggleWishlist={toggleWishlist}
-              setSelectedProduct={setSelectedProduct}
-            />
+            <div className="animate-fade-in-up w-full">
+              <StoreView
+                products={products}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                addToCart={addToCart}
+                wishlist={wishlist}
+                toggleWishlist={toggleWishlist}
+                setSelectedProduct={setSelectedProduct}
+              />
+            </div>
           )}
 
           {/* FAVORITES VIEW */}
@@ -279,7 +298,7 @@ export default function App() {
             !user ? (
               <AuthScreen onLogin={handleLogin} />
             ) : (
-              <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto">
+              <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto w-full">
                 <div className="flex items-center gap-4 mb-12">
                   <Heart className="text-rose-500 fill-rose-500" size={32} />
                   <h2 className="text-4xl font-heading font-bold text-white">Artículos Guardados</h2>
@@ -308,28 +327,32 @@ export default function App() {
           {/* PROFILE VIEW */}
           {view === ViewState.PROFILE && (
             !user ? (
-              <AuthScreen onLogin={handleLogin} />
+              <div className="animate-fade-in-up w-full"><AuthScreen onLogin={handleLogin} /></div>
             ) : (
-              <ProfileView
-                user={user}
-                orders={orders}
-                wishlist={wishlist}
-                setUser={setUser}
-                setIsAuthenticated={setIsAuthenticated}
-                setCart={setCart}
-                setView={setView}
-              />
+              <div className="animate-fade-in-up w-full">
+                <ProfileView
+                  user={user}
+                  orders={orders}
+                  wishlist={wishlist}
+                  setUser={setUser}
+                  setIsAuthenticated={setIsAuthenticated}
+                  setCart={setCart}
+                  setView={setView}
+                />
+              </div>
             )
           )}
 
           {/* CART VIEW */}
           {view === ViewState.CART && (
-            <CartView
-              cart={cart}
-              user={user}
-              updateQuantity={updateQuantity}
-              checkoutStatus={checkoutStatus}
-            />
+            <div className="animate-fade-in-up w-full">
+              <CartView
+                cart={cart}
+                user={user}
+                updateQuantity={updateQuantity}
+                checkoutStatus={checkoutStatus}
+              />
+            </div>
           )}
 
           {/* ADMIN VIEW */}
