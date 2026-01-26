@@ -1,0 +1,5 @@
+{
+  "name": "PolyForm 3D Store",
+  "description": "A premium 3D printing marketplace with iOS-style glassmorphism, persistent storage, admin panel, and Docker/Coolify deployment readiness.",
+  "requestFramePermissions": []
+}
