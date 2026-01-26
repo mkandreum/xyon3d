@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Trash2, Box, Send, Database, Cloud, X, Loader2, Settings, Lock, LogOut, Search, Heart, User, ChevronRight, ChevronLeft, Hexagon, Info, ShieldCheck, Terminal, AlertTriangle, Cpu, Sparkles, ShoppingCart, ArrowRight, Package, TrendingUp, DollarSign, ShoppingBag, UploadCloud } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { ViewState, Product, CartItem, AppSettings, Order } from './types';
@@ -761,7 +761,7 @@ volumes:
                   </div>
                   <div>
                     <h4 className="font-bold text-white text-base group-hover:text-blue-400 transition-colors">{p.name}</h4>
-                    <p className="text-zinc-500 text-sm mt-0.5">${p.price} • {p.category}</p>
+                    <p className="text-zinc-500 text-sm mt-0.5">${p.price} â€¢ {p.category}</p>
                   </div>
                 </div>
                 <button onClick={() => onDeleteProduct(p.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 text-zinc-400 hover:bg-rose-500 hover:text-white transition-all">
@@ -836,7 +836,7 @@ volumes:
                       <div className="lg:w-2/3">
                         <div className="bg-black/20 rounded-[1.5rem] border border-white/5 overflow-hidden">
                           <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Artículos en Pedido</span>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">ArtÃ­culos en Pedido</span>
                             <span className="text-xl font-heading font-bold text-white">${order.total.toFixed(2)}</span>
                           </div>
                           <div className="max-h-[300px] overflow-y-auto p-4 space-y-3">
@@ -867,103 +867,160 @@ volumes:
       )}
 
       {activeTab === 'settings' && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* General Settings */}
-            <div className="glass-card p-8 rounded-3xl border border-white/5">
-              <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
-                <Settings size={20} className="text-zinc-500" /> Configuración General
-              </h2>
-              <div className="space-y-5">
-                {Object.keys(localSettings).filter(k => !k.toLowerCase().includes('monei')).map((key) => (
-                  <div key={key}>
-                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-2 font-bold ml-1">{key.replace(/([A-Z])/g, ' $1')}</label>
+
+            {/* Column 1: Store & Email */}
+            <div className="space-y-8">
+              {/* Store Identity */}
+              <div className="glass-card p-8 rounded-3xl border border-white/5">
+                <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
+                  <ShoppingBag size={20} className="text-blue-500" /> Identidad de la Tienda
+                </h2>
+                <div className="space-y-5">
+                  <div>
+                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Nombre de la Tienda</label>
                     <input
-                      type={key.includes('Pass') ? 'password' : 'text'}
+                      type="text"
                       className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                      value={(localSettings as any)[key] || ''}
-                      onChange={e => setLocalSettings({ ...localSettings, [key]: e.target.value })}
+                      value={localSettings.storeName}
+                      onChange={e => setLocalSettings({ ...localSettings, storeName: e.target.value })}
                     />
                   </div>
-                ))}
+                  <div>
+                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Email del Administrador</label>
+                    <input
+                      type="email"
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                      value={localSettings.adminEmail}
+                      onChange={e => setLocalSettings({ ...localSettings, adminEmail: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Email / SMTP Service */}
+              <div className="glass-card p-8 rounded-3xl border border-white/5">
+                <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
+                  <Send size={20} className="text-green-500" /> Servidor de Correo (SMTP)
+                </h2>
+                <div className="space-y-5">
+                  <div>
+                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Host SMTP</label>
+                    <input
+                      type="text"
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                      value={localSettings.smtpHost}
+                      onChange={e => setLocalSettings({ ...localSettings, smtpHost: e.target.value })}
+                      placeholder="smtp.gmail.com"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">Usuario SMTP</label>
+                      <input
+                        type="text"
+                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                        value={localSettings.smtpUser}
+                        onChange={e => setLocalSettings({ ...localSettings, smtpUser: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-1 font-bold ml-1">ContraseÃ±a SMTP</label>
+                      <input
+                        type="password"
+                        className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                        value={localSettings.smtpPass}
+                        onChange={e => setLocalSettings({ ...localSettings, smtpPass: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* MONEI / Payment Settings */}
-            <div className="glass-card p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                <DollarSign size={80} />
-              </div>
+            {/* Column 2: Payment & Actions */}
+            <div className="space-y-8">
+              {/* MONEI / Payment Settings */}
+              <div className="glass-card p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden h-full">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <DollarSign size={80} />
+                </div>
 
-              <h2 className="text-xl font-heading font-bold mb-2 text-white flex items-center gap-2 relative z-10">
-                <ShieldCheck size={20} className="text-blue-400" /> Pasarela de Pago
+                <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2 relative z-10">
+                  <ShieldCheck size={20} className="text-blue-400" /> Pasarela de Pago
+                </h2>
+                <p className="text-zinc-500 text-xs mb-8 relative z-10 px-1 border-l-2 border-blue-500 pl-3">
+                  Configura tus credenciales de <strong>MONEI</strong> para aceptar pagos seguros con Bizum, Tarjeta y PayPal.
+                </p>
+
+                <div className="space-y-6 relative z-10">
+                  <div>
+                    <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-1 font-bold ml-1">MONEI Account ID</label>
+                    <input
+                      type="text"
+                      placeholder="u_..."
+                      className="w-full bg-zinc-950 border border-blue-500/30 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors shadow-inner"
+                      value={localSettings.moneiAccountId || ''}
+                      onChange={e => setLocalSettings({ ...localSettings, moneiAccountId: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-1 font-bold ml-1">MONEI API Key</label>
+                    <input
+                      type="password"
+                      placeholder="m_..."
+                      className="w-full bg-zinc-950 border border-blue-500/30 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors shadow-inner"
+                      value={localSettings.moneiApiKey || ''}
+                      onChange={e => setLocalSettings({ ...localSettings, moneiApiKey: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-12 pt-8 border-t border-white/5">
+                  <button
+                    onClick={() => onSaveSettings(localSettings)}
+                    className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 hover:-translate-y-1 transition-all shadow-xl shadow-white/5 uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                  >
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Guardar Toda la ConfiguraciÃ³n
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {
+        activeTab === 'system' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center">
+                <span className="text-5xl font-heading font-bold text-white mb-2">{orders.length}</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Orders Processed</span>
+              </div>
+              <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center">
+                <span className="text-5xl font-heading font-bold text-blue-500 mb-2">${orders.reduce((acc, o) => acc + o.total, 0).toFixed(2)}</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Revenue</span>
+              </div>
+            </div>
+
+            <div className="glass-card p-10 rounded-3xl">
+              <h2 className="text-xl font-heading font-bold mb-6 flex items-center gap-2 text-white">
+                <Cloud size={24} className="text-blue-500" /> Deployment Configuration
               </h2>
-              <p className="text-zinc-500 text-xs mb-8 relative z-10">Configura tus credenciales de MONEI para aceptar pagos con Bizum y Tarjeta.</p>
-
-              <div className="space-y-5 relative z-10">
-                <div>
-                  <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-2 font-bold ml-1">MONEI Account ID</label>
-                  <input
-                    type="text"
-                    placeholder="u_..."
-                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                    value={localSettings.moneiAccountId || ''}
-                    onChange={e => setLocalSettings({ ...localSettings, moneiAccountId: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-2 font-bold ml-1">MONEI API Key</label>
-                  <input
-                    type="password"
-                    placeholder="m_..."
-                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                    value={localSettings.moneiApiKey || ''}
-                    onChange={e => setLocalSettings({ ...localSettings, moneiApiKey: e.target.value })}
-                  />
-                </div>
+              <div className="bg-black/80 p-6 rounded-2xl border border-white/10 font-mono text-xs text-zinc-400 overflow-x-auto relative">
+                <div className="absolute top-0 right-0 p-2 text-[10px] text-zinc-600 uppercase">docker-compose.yml</div>
+                <pre>{dockerComposeContent}</pre>
               </div>
-
-              <div className="mt-10 pt-6 border-t border-white/5">
-                <button
-                  onClick={() => onSaveSettings(localSettings)}
-                  className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5 uppercase tracking-widest text-xs"
-                >
-                  Guardar Cambios
-                </button>
-              </div>
+              <p className="mt-4 text-zinc-500 text-sm">
+                Copy this configuration to your Coolify instance to deploy the persistent database alongside the application.
+              </p>
             </div>
           </div>
-        </div>
-      )}
-
-      {activeTab === 'system' && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center">
-              <span className="text-5xl font-heading font-bold text-white mb-2">{orders.length}</span>
-              <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Orders Processed</span>
-            </div>
-            <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center">
-              <span className="text-5xl font-heading font-bold text-blue-500 mb-2">${orders.reduce((acc, o) => acc + o.total, 0).toFixed(2)}</span>
-              <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total Revenue</span>
-            </div>
-          </div>
-
-          <div className="glass-card p-10 rounded-3xl">
-            <h2 className="text-xl font-heading font-bold mb-6 flex items-center gap-2 text-white">
-              <Cloud size={24} className="text-blue-500" /> Deployment Configuration
-            </h2>
-            <div className="bg-black/80 p-6 rounded-2xl border border-white/10 font-mono text-xs text-zinc-400 overflow-x-auto relative">
-              <div className="absolute top-0 right-0 p-2 text-[10px] text-zinc-600 uppercase">docker-compose.yml</div>
-              <pre>{dockerComposeContent}</pre>
-            </div>
-            <p className="mt-4 text-zinc-500 text-sm">
-              Copy this configuration to your Coolify instance to deploy the persistent database alongside the application.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
@@ -1557,7 +1614,7 @@ export default function App() {
                     }}
                     className="px-4 py-2 bg-zinc-900 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-rose-500 transition-colors flex items-center gap-2"
                   >
-                    <LogOut size={14} /> Cerrar Sesión
+                    <LogOut size={14} /> Cerrar SesiÃ³n
                   </button>
                 </div>
 
