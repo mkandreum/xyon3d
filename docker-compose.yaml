@@ -3,6 +3,9 @@ version: '3.8'
 services:
   app:
     build: .
+    labels:
+      - "coolify.managed=true"
+      - "coolify.port=3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${DB_USER:-polyform_user}:${DB_PASSWORD:-polyform_secure_pass}@db:5432/${DB_NAME:-polyform_db}
