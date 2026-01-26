@@ -1,13 +1,23 @@
-const express = require('express');
-const { Pool } = require('pg');
-const cors = require('cors');
-const path = require('path');
-const multer = require('multer');
-const fs = require('fs');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+import express from 'express';
+import pg from 'pg';
+import cors from 'cors';
+import path from 'path';
+import multer from 'multer';
+import fs from 'fs';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { Monei } from '@monei-js/node-sdk';
+
+dotenv.config();
+
+const { Pool } = pg;
+
+// ESM __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -374,7 +384,7 @@ const sendEmail = async (to, subject, html) => {
         });
 
         const mailOptions = {
-            from: `"PolyForm Store" <${settings.smtpUser}>`,
+            from: `"Xyon3D Store" <${settings.smtpUser}>`,
             to,
             subject,
             html,
@@ -522,12 +532,10 @@ app.post('/api/create-payment', async (req, res) => {
         }
 
         const moneiApiKey = result.rows[0].value;
-        const { Monei } = require('@monei-js/node-sdk');
         const monei = new Monei(moneiApiKey);
 
         // Create Payment
         // Expect orderId from frontend (created via /api/orders first)
-        // const orderId = req.body.orderId; // Removed duplicate
 
         const payment = await monei.payments.create({
             amount: Math.round(total * 100), // In cents
@@ -694,7 +702,7 @@ app.use((err, req, res, next) => {
 // ==================== START SERVER ====================
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 PolyForm 3D Store server running on port ${PORT}`);
+    console.log(`🚀 Xyon3D Store server running on port ${PORT}`);
     console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🗄️  Database: ${process.env.DATABASE_URL ? 'Connected' : 'Using default connection'}`);
 });
