@@ -833,27 +833,71 @@ volumes:
       )}
 
       {activeTab === 'settings' && (
-        <div className="glass-card p-10 rounded-3xl max-w-2xl mx-auto">
-          <h2 className="text-2xl font-heading font-bold mb-8 text-white">System Configuration</h2>
-          <div className="space-y-6">
-            {Object.keys(localSettings).map((key) => (
-              <div key={key}>
-                <label className="text-xs text-zinc-400 uppercase tracking-widest block mb-2 font-semibold ml-1">{key.replace(/([A-Z])/g, ' $1')}</label>
-                <input
-                  type={key.includes('Pass') || key.includes('ApiKey') ? 'password' : 'text'}
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                  value={(localSettings as any)[key] || ''}
-                  onChange={e => setLocalSettings({ ...localSettings, [key]: e.target.value })}
-                  placeholder={key.includes('monei') ? 'YOUR_MONEI_KEY' : ''}
-                />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* General Settings */}
+            <div className="glass-card p-8 rounded-3xl border border-white/5">
+              <h2 className="text-xl font-heading font-bold mb-6 text-white flex items-center gap-2">
+                <Settings size={20} className="text-zinc-500" /> Configuración General
+              </h2>
+              <div className="space-y-5">
+                {Object.keys(localSettings).filter(k => !k.toLowerCase().includes('monei')).map((key) => (
+                  <div key={key}>
+                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest block mb-2 font-bold ml-1">{key.replace(/([A-Z])/g, ' $1')}</label>
+                    <input
+                      type={key.includes('Pass') ? 'password' : 'text'}
+                      className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                      value={(localSettings as any)[key] || ''}
+                      onChange={e => setLocalSettings({ ...localSettings, [key]: e.target.value })}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-            <button
-              onClick={() => onSaveSettings(localSettings)}
-              className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-500 transition-colors mt-6 shadow-lg shadow-blue-900/20"
-            >
-              Save Configuration
-            </button>
+            </div>
+
+            {/* MONEI / Payment Settings */}
+            <div className="glass-card p-8 rounded-3xl border border-blue-500/20 bg-blue-500/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <DollarSign size={80} />
+              </div>
+
+              <h2 className="text-xl font-heading font-bold mb-2 text-white flex items-center gap-2 relative z-10">
+                <ShieldCheck size={20} className="text-blue-400" /> Pasarela de Pago
+              </h2>
+              <p className="text-zinc-500 text-xs mb-8 relative z-10">Configura tus credenciales de MONEI para aceptar pagos con Bizum y Tarjeta.</p>
+
+              <div className="space-y-5 relative z-10">
+                <div>
+                  <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-2 font-bold ml-1">MONEI Account ID</label>
+                  <input
+                    type="text"
+                    placeholder="u_..."
+                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                    value={localSettings.moneiAccountId || ''}
+                    onChange={e => setLocalSettings({ ...localSettings, moneiAccountId: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-blue-400 uppercase tracking-widest block mb-2 font-bold ml-1">MONEI API Key</label>
+                  <input
+                    type="password"
+                    placeholder="m_..."
+                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none transition-colors"
+                    value={localSettings.moneiApiKey || ''}
+                    onChange={e => setLocalSettings({ ...localSettings, moneiApiKey: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-10 pt-6 border-t border-white/5">
+                <button
+                  onClick={() => onSaveSettings(localSettings)}
+                  className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-200 transition-all shadow-xl shadow-white/5 uppercase tracking-widest text-xs"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
