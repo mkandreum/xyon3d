@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, Trash2, Box, Send, Database, Cloud, X, Loader2, Settings, Lock, LogOut, Search, Heart, User, ChevronRight, ChevronLeft, Hexagon, Info, ShieldCheck, Terminal, AlertTriangle, Cpu, Sparkles, ShoppingCart, ArrowRight, Package, TrendingUp, DollarSign, ShoppingBag } from 'lucide-react';
+import { Plus, Trash2, Box, Send, Database, Cloud, X, Loader2, Settings, Lock, LogOut, Search, Heart, User, ChevronRight, ChevronLeft, Hexagon, Info, ShieldCheck, Terminal, AlertTriangle, Cpu, Sparkles, ShoppingCart, ArrowRight, Package, TrendingUp, DollarSign, ShoppingBag, UploadCloud } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { ViewState, Product, CartItem, AppSettings, Order } from './types';
 import { ApiService } from './services/api';
@@ -309,11 +309,12 @@ const AdminPanel: React.FC<{
         price: Number(newProduct.price),
         description: newProduct.description || '',
         imageUrl: newProduct.imageUrl || '',
-        category: newProduct.category || 'General',
+        categoryId: newProduct.category || 'General',
         modelUrl: newProduct.modelUrl || '',
-        gallery: galleryText.split('\n').filter(url => url.trim() !== '')
+        gallery: galleryText.split('\n').filter(url => url.trim() !== ''),
+        stock: newProduct.stock || 10
       });
-      setNewProduct({ name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: [] });
+      setNewProduct({ name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: [], stock: 10 });
       setGalleryText('');
     }
   };
@@ -394,6 +395,13 @@ volumes:
                     className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
                     value={newProduct.category}
                     onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Stock"
+                    className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white text-sm focus:border-blue-500 outline-none"
+                    value={newProduct.stock || ''}
+                    onChange={e => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
                   />
                 </div>
                 <div className="relative">
