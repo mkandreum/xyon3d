@@ -788,40 +788,74 @@ volumes:
             ) : (
               <div className="space-y-3">
                 {orders.map(order => (
-                  <div key={order.id} className="bg-zinc-900 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="font-bold text-white">Order #{order.id}</h4>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${order.status === 'delivered' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                            order.status === 'shipped' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                              'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                            }`}>
-                            {order.status}
-                          </span>
+                  <div key={order.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 sm:p-8 hover:border-white/10 transition-all group">
+                    <div className="flex flex-col lg:flex-row gap-8">
+                      {/* Left Side: Order Info */}
+                      <div className="lg:w-1/3 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-zinc-400 group-hover:text-blue-400 transition-colors">
+                            <Package size={20} />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-white text-lg">Pedido #{order.id}</h4>
+                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                              {new Date(order.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-zinc-400 text-sm mb-1">{order.customerEmail}</p>
-                        {order.shippingAddress && (
-                          <p className="text-zinc-500 text-xs mb-2 italic">📍 {order.shippingAddress}</p>
-                        )}
-                        <p className="text-zinc-500 text-xs">{new Date(order.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+
+                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-2">
+                          <p className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                            <User size={14} className="text-zinc-500" /> {order.customerEmail}
+                          </p>
+                          {order.shippingAddress && (
+                            <p className="text-xs text-zinc-500 flex items-start gap-2 leading-relaxed">
+                              <Box size={14} className="text-zinc-600 mt-0.5" />
+                              <span className="italic">{order.shippingAddress}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <select
+                            value={order.status}
+                            onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as any)}
+                            className={`flex-grow bg-zinc-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest outline-none transition-all cursor-pointer
+                              ${order.status === 'delivered' ? 'text-green-400 border-green-500/20' :
+                                order.status === 'shipped' ? 'text-blue-400 border-blue-500/20' : 'text-yellow-400 border-yellow-500/20'}
+                            `}
+                          >
+                            <option value="pending">Pendiente</option>
+                            <option value="shipped">Enviado</option>
+                            <option value="delivered">Entregado</option>
+                          </select>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-white">${order.total.toFixed(2)}</div>
-                          <div className="text-xs text-zinc-500">{order.items.length} item(s)</div>
+                      {/* Right Side: Products Grid */}
+                      <div className="lg:w-2/3">
+                        <div className="bg-black/20 rounded-[1.5rem] border border-white/5 overflow-hidden">
+                          <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Artículos en Pedido</span>
+                            <span className="text-xl font-heading font-bold text-white">${order.total.toFixed(2)}</span>
+                          </div>
+                          <div className="max-h-[300px] overflow-y-auto p-4 space-y-3">
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-4 bg-zinc-800/30 p-3 rounded-2xl border border-white/5 group/item transition-colors hover:bg-zinc-800/50">
+                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0">
+                                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-grow">
+                                  <h5 className="text-sm font-bold text-white group-hover/item:text-blue-400 transition-colors uppercase tracking-tight">{item.name}</h5>
+                                  <div className="flex items-center justify-between mt-0.5">
+                                    <span className="text-xs text-zinc-500">Cantidad: <span className="text-zinc-300 font-bold">{item.quantity}</span></span>
+                                    <span className="text-xs font-bold text-white">${(item.price * (item.quantity || 1)).toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-
-                        <select
-                          value={order.status}
-                          onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as any)}
-                          className="bg-zinc-800 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:border-blue-500 outline-none"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                        </select>
                       </div>
                     </div>
                   </div>
