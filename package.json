@@ -2,7 +2,6 @@
   "name": "polyform-3d-store",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:server": "node server/index.js",
