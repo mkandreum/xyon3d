@@ -1,5 +1,6 @@
 // Service Worker for PWA
-const CACHE_NAME = 'polyform-3d-v1';
+// Service Worker for Xyon3D PWA
+const CACHE_NAME = 'xyon3d-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -19,36 +20,47 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network First for HTML/API, Cache First for assets
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Cache hit - return response
-                if (response) {
+    // Skip cross-origin requests
+    if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
+    // Network First for HTML, JSON (API), and root
+    if (event.request.mode === 'navigate' ||
+        event.request.headers.get('accept').includes('text/html') ||
+        event.request.url.includes('/api/')) {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Update cache with fresh version
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
                     return response;
-                }
-
-                return fetch(event.request).then(
-                    (response) => {
-                        // Check if valid response
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-
-                        // Clone the response
-                        const responseToCache = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    }
-                );
-            })
-    );
+                })
+                .catch(() => {
+                    return caches.match(event.request);
+                })
+        );
+    } else {
+        // Cache First for others (scripts, images, css)
+        // BUT force network check if sw.js changed (handled by version bump)
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => {
+                    return response || fetch(event.request).then((networkResponse) => {
+                        const responseToCache = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseToCache);
+                        });
+                        return networkResponse;
+                    });
+                })
+        );
+    }
 });
 
 // Activate event - clean up old caches
