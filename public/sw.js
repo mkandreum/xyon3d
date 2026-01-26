@@ -27,6 +27,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // ONLY cache GET requests. POST/PUT/DELETE are unsupported by Cache API.
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
     // Network First for HTML, JSON (API), and root
     if (event.request.mode === 'navigate' ||
         event.request.headers.get('accept').includes('text/html') ||
@@ -34,7 +39,7 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    // Update cache with fresh version
+                    // Update cache for GET requests
                     const responseToCache = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
@@ -47,7 +52,6 @@ self.addEventListener('fetch', (event) => {
         );
     } else {
         // Cache First for others (scripts, images, css)
-        // BUT force network check if sw.js changed (handled by version bump)
         event.respondWith(
             caches.match(event.request)
                 .then((response) => {

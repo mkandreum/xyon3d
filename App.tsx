@@ -340,27 +340,53 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-zinc-900 border border-white/10 p-6 rounded-xl text-center">
-        <p className="text-zinc-400 mb-4 text-sm">Secure payment via MONEI (Bizum, PayPal, Cards)</p>
-        <div className="flex justify-center gap-3 mb-6 opacity-70">
-          <div className="bg-white/10 px-2 py-1 rounded text-xs">Bizum</div>
-          <div className="bg-white/10 px-2 py-1 rounded text-xs">Visa/MC</div>
-          <div className="bg-white/10 px-2 py-1 rounded text-xs">PayPal</div>
-          <div className="bg-white/10 px-2 py-1 rounded text-xs">Apple Pay</div>
+    <div className="space-y-6 animate-fade-in-up">
+      <div className="bg-zinc-900 border border-white/10 p-6 rounded-3xl text-center group transition-all hover:border-blue-500/30">
+        <div className="mb-6 flex justify-center">
+          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform duration-500">
+            <Box size={24} />
+          </div>
         </div>
+
+        <p className="text-zinc-400 mb-6 text-sm">Secure payment via MONEI (Bizum, PayPal, Cards)</p>
+
+        <div className="flex justify-center gap-3 mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
+          <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Bizum</div>
+          <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Visa/MC</div>
+          <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">PayPal</div>
+        </div>
+
         <button
           onClick={handleMoneiPayment}
           disabled={loading}
-          className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+          className={`
+            w-full py-5 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-3 shadow-xl 
+            ${loading ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-zinc-100 hover:-translate-y-1 active:scale-95'}
+          `}
         >
-          {loading ? <Loader2 className="animate-spin" size={20} /> : <div className="flex items-center gap-2"><Lock size={16} /> Pay ${total.toFixed(2)}</div>}
+          {loading ? (
+            <>
+              <Loader2 className="animate-spin" size={20} />
+              <span>Opening Gateway...</span>
+            </>
+          ) : (
+            <>
+              <ShieldCheck size={20} className="text-blue-600" />
+              <span className="uppercase tracking-widest text-sm">Pay ${total.toFixed(2)} Now</span>
+            </>
+          )}
         </button>
       </div>
-      {error && <div className="text-red-400 text-xs text-center bg-red-500/10 p-2 rounded-lg border border-red-500/20">{error}</div>}
-      <div className="flex items-center justify-center gap-2 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
-        <ShieldCheck size={12} className="text-green-500" />
-        <span>Encrypted & Secure Gateway</span>
+
+      {error && (
+        <div className="text-red-400 text-xs text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/20 animate-shake">
+          {error}
+        </div>
+      )}
+
+      <div className="flex items-center justify-center gap-2 text-zinc-600 text-[10px] uppercase font-bold tracking-widest">
+        <Lock size={12} className="text-zinc-700" />
+        <span>256-bit SSL Encrypted Connection</span>
       </div>
     </div>
   );
