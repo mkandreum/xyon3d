@@ -45,62 +45,15 @@ body {
 }
 
 /* Liquid Glass Effect (iOS 26 Style) */
-@keyframes glass-shimmer {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
 .glass-nav {
-    position: relative;
-    background: transparent !important;
-    /* Managed by pseudo-elements */
-    overflow: hidden;
-    isolation: isolate;
+    background: rgba(18, 18, 22, 0.75);
+    /* Darker and more opaque for better contrast */
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow:
-        0 25px 50px -12px rgba(0, 0, 0, 0.7),
+        0 12px 40px rgba(0, 0, 0, 0.5),
         inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-
-.glass-nav::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    /* Animated Liquid Background */
-    background: linear-gradient(125deg,
-            rgba(20, 20, 25, 0.6) 0%,
-            rgba(40, 45, 60, 0.3) 30%,
-            rgba(20, 20, 25, 0.6) 50%,
-            rgba(45, 40, 55, 0.3) 70%,
-            rgba(20, 20, 25, 0.6) 100%);
-    background-size: 200% 200%;
-    animation: glass-shimmer 12s linear infinite;
-
-    /* The Frost */
-    backdrop-filter: blur(50px) saturate(210%) brightness(90%);
-    -webkit-backdrop-filter: blur(50px) saturate(210%) brightness(90%);
-}
-
-/* Noise overlay for premium physical feel */
-.glass-nav::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    opacity: 0.15;
-    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-    filter: contrast(150%) brightness(150%);
-    pointer-events: none;
 }
 
 model-viewer {

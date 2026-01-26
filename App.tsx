@@ -246,7 +246,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-white pb-32 overflow-x-hidden">
+    <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-white pb-32">
       {/* Premium Tech Background */}
       <div className="fixed inset-0 bg-grid pointer-events-none z-0"></div>
 
