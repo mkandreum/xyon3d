@@ -301,7 +301,7 @@ const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; onLoginSuccess
 
 // 5. Checkout Component
 // 5. Checkout Component (MONEI Hosted)
-const CheckoutForm: React.FC<{ total: number, userEmail: string }> = ({ total, userEmail }) => {
+const CheckoutForm: React.FC<{ total: number, userEmail: string, items: CartItem[] }> = ({ total, userEmail, items }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -313,28 +313,29 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string }> = ({ total, u
       // 1. Create Order (Pending)
       const order = await ApiService.createOrder({
         customerEmail: userEmail,
-        items: [], // Access cart from props/context? Need cart access here.
-        // Actually CheckoutForm only has total/email.
-        // We need to pass the cart items or handle it.
-        // Given the current props, we might need a quick hack or refactor.
-        // The simplest way without changing props everywhere is using the global store context if available,
-        // but 'cart' is in App component state.
-
-        // FIXED: CheckoutForm usage in App.tsx Passes cart. Wait, it doesn't pass cart items?
-        // Checking usage: <CheckoutForm total={...} userEmail={...} />
-        // We need to pass 'cart' to CheckoutForm or move this logic up.
-        // Let's modify props to accept 'items'.
+        items: items,
         total: total,
         status: 'pending',
         date: new Date().toISOString()
-      } as any); // Type assertion if needed, but better to fix props.
+      });
 
-      // WAIT: CheckoutForm doesn't have 'items' prop.
-      // I need to update the Component signature first.
+      // 2. Create MONEI Payment
+      const payment = await ApiService.createMoneiPayment({
+        orderId: order.id,
+        total: total,
+        customerEmail: userEmail
+      });
 
-      throw new Error("Refactor needed: Pass items to CheckoutForm");
-    } catch (err) {
-      // ...
+      // 3. Redirect to MONEI
+      if (payment.redirectUrl) {
+        window.location.href = payment.redirectUrl;
+      } else {
+        throw new Error("No redirect URL received from payment gateway");
+      }
+    } catch (err: any) {
+      console.error('Payment flow error:', err);
+      setError(err.message || 'Payment process failed. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -356,10 +357,10 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string }> = ({ total, u
           {loading ? <Loader2 className="animate-spin" size={20} /> : <div className="flex items-center gap-2"><Lock size={16} /> Pay ${total.toFixed(2)}</div>}
         </button>
       </div>
-      {error && <div className="text-red-400 text-sm text-center">{error}</div>}
-      <div className="flex items-center justify-center gap-2 text-zinc-500 text-xs">
-        <ShieldCheck size={12} />
-        <span>Encrypted & Secure</span>
+      {error && <div className="text-red-400 text-xs text-center bg-red-500/10 p-2 rounded-lg border border-red-500/20">{error}</div>}
+      <div className="flex items-center justify-center gap-2 text-zinc-500 text-[10px] uppercase font-bold tracking-widest">
+        <ShieldCheck size={12} className="text-green-500" />
+        <span>Encrypted & Secure Gateway</span>
       </div>
     </div>
   );
@@ -1052,7 +1053,7 @@ export default function App() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-zinc-400">Loading PolyForm 3D Store...</p>
+          <p className="text-zinc-400">Loading Xyon3D Store...</p>
         </div>
       </div>
     );

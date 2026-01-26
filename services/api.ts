@@ -211,7 +211,19 @@ export const ApiService = {
 
     getUserProfile: async () => {
         // Profile endpoint not yet implemented in backend, mocking for now or skipping
-        // Real implementation would verify token
         return { message: 'Profile fetch placeholder' };
+    },
+
+    createMoneiPayment: async (data: { orderId: string, total: number, customerEmail: string }) => {
+        const response = await fetch(`${API_BASE_URL}/create-payment`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Payment creation failed');
+        }
+        return response.json();
     }
 };
