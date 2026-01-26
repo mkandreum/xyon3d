@@ -83,21 +83,34 @@ const initDatabase = async () => {
                 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 10;
             `);
             console.log('✅ Migration applied: stock column verified');
+                ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 10;
+            `);
+            console.log('✅ Migration applied: stock column verified');
         } catch (e) {
             console.log('ℹ️ Migration note:', e.message);
+        }
+
+        // 2.7 Migration: Add user_id to wishlist
+        try {
+            await pool.query(`
+                ALTER TABLE wishlist ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+            `);
+            console.log('✅ Migration applied: wishlist user_id verified');
+        } catch (e) {
+             console.log('ℹ️ Migration note (wishlist):', e.message);
         }
 
         // 2.6 Migration: Create users table if schema didn't catch it
         try {
             await pool.query(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    password_hash VARCHAR(255) NOT NULL,
-                    name VARCHAR(100),
-                    role VARCHAR(20) DEFAULT 'user',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
+                CREATE TABLE IF NOT EXISTS users(
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                name VARCHAR(100),
+                role VARCHAR(20) DEFAULT 'user',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             `);
             console.log('✅ Migration applied: users table verified');
         } catch (e) {
@@ -115,7 +128,7 @@ const initDatabase = async () => {
             await pool.query(seedSql);
             console.log('✅ Database seeded successfully');
         } else {
-            console.log(`ℹ️  Database contains ${productsCount.rows[0].count} products, skipping seed`);
+            console.log(`ℹ️  Database contains ${ productsCount.rows[0].count } products, skipping seed`);
         }
 
     } catch (err) {
@@ -265,7 +278,7 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
         // Return the public URL for the file
-        const fileUrl = `/uploads/${req.file.filename}`;
+        const fileUrl = `/ uploads / ${ req.file.filename } `;
         res.json({ url: fileUrl });
     } catch (error) {
         console.error('File upload error:', error);
@@ -316,8 +329,8 @@ app.post('/api/products', async (req, res) => {
         }
 
         const result = await pool.query(
-            `INSERT INTO products (name, description, price, category, image_url, model_url, gallery) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+            `INSERT INTO products(name, description, price, category, image_url, model_url, gallery)
+            VALUES($1, $2, $3, $4, $5, $6, $7) 
        RETURNING id, name, description, price, category, image_url as "imageUrl", model_url as "modelUrl", gallery`,
             [name, description || '', price, category, imageUrl || '', modelUrl || '', JSON.stringify(gallery || [])]
         );
@@ -402,7 +415,7 @@ const sendEmail = async (to, subject, html) => {
         });
 
         const mailOptions = {
-            from: `"Xyon3D Store" <${settings.smtpUser}>`,
+            from: `"Xyon3D Store" < ${ settings.smtpUser }> `,
             to,
             subject,
             html,
@@ -433,7 +446,6 @@ app.get('/api/orders', async (req, res) => {
 // Create order
 app.post('/api/orders', async (req, res) => {
     const client = await pool.connect();
-    const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const { items, customerEmail, total } = req.body;
@@ -448,10 +460,10 @@ app.post('/api/orders', async (req, res) => {
         for (const item of items) {
             const productRes = await client.query('SELECT stock FROM products WHERE id = $1', [item.id]);
             if (productRes.rows.length === 0) {
-                throw new Error(`Product ${item.name} not found`);
+                throw new Error(`Product ${ item.name } not found`);
             }
             if (productRes.rows[0].stock < item.quantity) {
-                throw new Error(`Insufficient stock for ${item.name}`);
+                throw new Error(`Insufficient stock for ${ item.name }`);
             }
         }
 
@@ -469,7 +481,7 @@ app.post('/api/orders', async (req, res) => {
 
         // Send Confirmation Email
         const emailHtml = `
-            <h1>Order Confirmed! 🚀</h1>
+                < h1 > Order Confirmed! 🚀</h1 >
             <p>Thank you for your order, ID: <strong>#${result.rows[0].id}</strong></p>
             <h3>Summary:</h3>
             <ul>
@@ -477,8 +489,8 @@ app.post('/api/orders', async (req, res) => {
             </ul>
             <p><strong>Total: $${total.toFixed(2)}</strong></p>
             <p>We will notify you when your order is shipped.</p>
-        `;
-        sendEmail(customerEmail, `Order Confirmation #${result.rows[0].id}`, emailHtml);
+            `;
+        sendEmail(customerEmail, `Order Confirmation #${ result.rows[0].id } `, emailHtml);
 
         res.status(201).json({
             id: result.rows[0].id,
@@ -512,9 +524,9 @@ app.patch('/api/orders/:id/status', async (req, res) => {
 
         // Send Status Update Email
         if (['shipped', 'delivered'].includes(status)) {
-            const subject = status === 'shipped' ? `Order #${id} Shipped! 🚚` : `Order #${id} Delivered! 📦`;
+            const subject = status === 'shipped' ? `Order #${ id } Shipped! 🚚` : `Order #${ id } Delivered! 📦`;
             const html = `
-                <h1>Update on Order #${id}</h1>
+                < h1 > Update on Order #${ id }</h1 >
                 <p>Your order status is now: <strong style="text-transform:uppercase;">${status}</strong></p>
                 <p>Track your order or view details in your account.</p>
             `;
@@ -565,13 +577,13 @@ app.post('/api/create-payment', async (req, res) => {
         const payment = await monei.payments.create({
             amount: Math.round(total * 100), // In cents
             currency: 'EUR',
-            orderId: orderId ? `ORDER-${orderId}` : `ORDER-${Date.now()}`, // Fallback if no ID
-            description: `Order #${orderId} from ${customerEmail}`,
+            orderId: orderId ? `ORDER - ${ orderId } ` : `ORDER - ${ Date.now() } `, // Fallback if no ID
+            description: `Order #${ orderId } from ${ customerEmail } `,
             customer: {
                 email: customerEmail
             },
-            callbackUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/api/monei/webhook`,
-            completeUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_success=true&orderId=${orderId}`,
+            callbackUrl: `${ process.env.SERVICE_URL_APP || 'http://localhost:3000' } /api/monei / webhook`,
+            completeUrl: `${ process.env.SERVICE_URL_APP || 'http://localhost:3000' }/?payment_success=true&orderId=${orderId}`,
             cancelUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_cancel=true`
         });
 
@@ -625,16 +637,30 @@ app.put('/api/settings', async (req, res) => {
 
 // -------------------- WISHLIST --------------------
 
-// Get wishlist (using session ID from header or cookie)
+// Get wishlist
 app.get('/api/wishlist', async (req, res) => {
     try {
         const sessionId = req.headers['x-session-id'] || 'default-session';
+        const authHeader = req.headers.authorization;
+        let userId = null;
 
-        const result = await pool.query(
-            'SELECT product_id as "productId" FROM wishlist WHERE session_id = $1',
-            [sessionId]
-        );
+        if (authHeader) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                userId = decoded.id;
+            } catch (e) { }
+        }
 
+        let query = 'SELECT product_id as "productId" FROM wishlist WHERE session_id = $1';
+        let params = [sessionId];
+
+        if (userId) {
+            query = 'SELECT product_id as "productId" FROM wishlist WHERE user_id = $1';
+            params = [userId];
+        }
+
+        const result = await pool.query(query, params);
         const productIds = result.rows.map(row => row.productId);
         res.json(productIds);
     } catch (error) {
@@ -648,15 +674,34 @@ app.post('/api/wishlist', async (req, res) => {
     try {
         const { productId } = req.body;
         const sessionId = req.headers['x-session-id'] || 'default-session';
+        const authHeader = req.headers.authorization;
+        let userId = null;
+
+        if (authHeader) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                userId = decoded.id;
+            } catch (e) { }
+        }
 
         if (!productId) {
             return res.status(400).json({ error: 'Product ID is required' });
         }
 
-        await pool.query(
-            'INSERT INTO wishlist (product_id, session_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-            [productId, sessionId]
-        );
+        if (userId) {
+            // User Authenticated
+            await pool.query(
+                'INSERT INTO wishlist (product_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                [productId, userId]
+            );
+        } else {
+            // Anonymous Session
+            await pool.query(
+                'INSERT INTO wishlist (product_id, session_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                [productId, sessionId]
+            );
+        }
 
         res.status(201).json({ message: 'Added to wishlist', productId });
     } catch (error) {
@@ -670,11 +715,28 @@ app.delete('/api/wishlist/:productId', async (req, res) => {
     try {
         const { productId } = req.params;
         const sessionId = req.headers['x-session-id'] || 'default-session';
+        const authHeader = req.headers.authorization;
+        let userId = null;
 
-        await pool.query(
-            'DELETE FROM wishlist WHERE product_id = $1 AND session_id = $2',
-            [productId, sessionId]
-        );
+        if (authHeader) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const decoded = jwt.verify(token, JWT_SECRET);
+                userId = decoded.id;
+            } catch (e) { }
+        }
+
+        if (userId) {
+            await pool.query(
+                'DELETE FROM wishlist WHERE product_id = $1 AND user_id = $2',
+                [parseInt(productId), userId]
+            );
+        } else {
+            await pool.query(
+                'DELETE FROM wishlist WHERE product_id = $1 AND session_id = $2',
+                [parseInt(productId), sessionId]
+            );
+        }
 
         res.json({ message: 'Removed from wishlist', productId });
     } catch (error) {

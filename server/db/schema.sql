@@ -38,8 +38,10 @@ CREATE TABLE IF NOT EXISTS wishlist (
     id SERIAL PRIMARY KEY,
     product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
     session_id VARCHAR(255),
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(product_id, session_id)
+    CONSTRAINT unique_product_session UNIQUE NULLS NOT DISTINCT (product_id, session_id),
+    CONSTRAINT unique_product_user UNIQUE NULLS NOT DISTINCT (product_id, user_id)
 );
 
 -- Indexes for performance
