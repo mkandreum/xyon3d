@@ -1118,44 +1118,55 @@ export default function App() {
 
           {/* PROFILE VIEW */}
           {view === ViewState.PROFILE && (
-            <div className="max-w-xl mx-auto px-4 py-12 sm:py-20 animate-fade-in-up">
-              <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden text-center group">
-                {/* Decorative Background */}
-                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-600/10 to-transparent"></div>
+            !user ? (
+              <AuthScreen onLogin={(userData, token) => {
+                setUser(userData);
+                // If user is admin (role check), set isAdmin. But for now general user login.
+                if (userData.role === 'admin') setIsAuthenticated(true);
+              }} />
+            ) : (
+              <div className="max-w-xl mx-auto px-4 py-12 sm:py-20 animate-fade-in-up">
+                <div className="glass-card p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden text-center group">
+                  {/* Decorative Background */}
+                  <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-600/10 to-transparent"></div>
 
-                <div className="relative z-10 flex flex-col items-center">
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-black p-1 mb-6 relative shadow-2xl bg-zinc-900 flex items-center justify-center">
-                    <User size={48} className="text-zinc-600" />
-                  </div>
-
-                  <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">{user?.name || 'User'}</h2>
-                  <p className="text-zinc-500 mb-6">{user?.email}</p>
-
-                  <div className="grid grid-cols-2 w-full gap-4 mb-8">
-                    <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
-                      <div className="text-3xl font-heading font-bold text-white mb-1">{orders.length}</div>
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Orders</div>
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-black p-1 mb-6 relative shadow-2xl bg-zinc-900 flex items-center justify-center">
+                      <User size={48} className="text-zinc-600" />
                     </div>
-                    <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
-                      <div className="text-3xl font-heading font-bold text-white mb-1">{wishlist.length}</div>
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Saved</div>
-                    </div>
-                  </div>
 
-                  <button
-                    onClick={() => {
-                      setUser(null);
-                      localStorage.removeItem('polyform_token');
-                      localStorage.removeItem('polyform_user');
-                      setView(ViewState.STORE);
-                    }}
-                    className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-zinc-200 transition-colors shadow-lg uppercase tracking-wide text-sm flex items-center justify-center gap-2"
-                  >
-                    <LogOut size={16} /> Sign Out
-                  </button>
+                    <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white mb-2">{user.name}</h2>
+                    <p className="text-zinc-500 mb-6">{user.email}</p>
+
+                    <div className="grid grid-cols-2 w-full gap-4 mb-8">
+                      <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
+                        <div className="text-3xl font-heading font-bold text-white mb-1">
+                          {orders.filter(o => o.customerEmail === user.email).length}
+                        </div>
+                        <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Orders</div>
+                      </div>
+                      <div className="bg-zinc-900/50 rounded-2xl p-5 border border-white/5">
+                        <div className="text-3xl font-heading font-bold text-white mb-1">{wishlist.length}</div>
+                        <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Saved</div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setUser(null);
+                        setIsAuthenticated(false);
+                        localStorage.removeItem('xyon3d_token');
+                        localStorage.removeItem('xyon3d_user');
+                        setView(ViewState.STORE);
+                      }}
+                      className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-zinc-200 transition-colors shadow-lg uppercase tracking-wide text-sm flex items-center justify-center gap-2"
+                    >
+                      <LogOut size={16} /> Sign Out
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )
           )}
 
           {/* CART VIEW */}
