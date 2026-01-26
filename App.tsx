@@ -365,34 +365,63 @@ const CheckoutForm: React.FC<{ total: number, userEmail: string }> = ({ total, u
   );
 };
 
-// 3. Login Screen - Professional
-const LoginScreen: React.FC<{ onLogin: (pass: string) => void }> = ({ onLogin }) => {
+// 3. Auth Screen (Login / Register) - Unified
+const AuthScreen: React.FC<{
+  onLogin: (user: any, token: string) => void,
+  isAdmin?: boolean
+}> = ({ onLogin, isAdmin = false }) => {
+  const [isLogin, setIsLogin] = useState(true);
+
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState(''); // For register
+  const [code, setCode] = useState(''); // For 2FA
+  const [show2FA, setShow2FA] = useState(false);
+
   const [status, setStatus] = useState<'idle' | 'error' | 'success'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('idle');
+    setErrorMsg('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const body: any = { email, password };
+      if (!isLogin) body.name = name;
+      if (show2FA) body.code = code;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
+        body: JSON.stringify(body)
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        if (data.require2fa) {
+          setShow2FA(true);
+          return;
+        }
         setStatus('success');
-        setTimeout(() => onLogin(password), 800);
+        // Store session
+        localStorage.setItem('xyon3d_token', data.token);
+        localStorage.setItem('xyon3d_user', JSON.stringify(data.user));
+
+        // Short delay for animation
+        setTimeout(() => onLogin(data.user, data.token), 800);
       } else {
         setStatus('error');
-        setPassword('');
-        setTimeout(() => setStatus('idle'), 1500);
+        setErrorMsg(data.error || 'Authentication failed');
+        if (!show2FA) setPassword('');
+        setTimeout(() => setStatus('idle'), 2000);
       }
     } catch (error) {
       setStatus('error');
-      setPassword('');
-      setTimeout(() => setStatus('idle'), 1500);
+      setErrorMsg('Connection error');
+      setTimeout(() => setStatus('idle'), 2000);
     }
   };
 
@@ -401,31 +430,88 @@ const LoginScreen: React.FC<{ onLogin: (pass: string) => void }> = ({ onLogin })
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white border border-white/5 shadow-xl rotate-3">
-            <Lock size={28} />
+            <User size={28} />
           </div>
-          <h2 className="text-2xl font-heading font-bold text-white mb-2">Admin Dashboard</h2>
-          <p className="text-zinc-500 text-sm">Secure access only. Authentication required.</p>
+          <h2 className="text-2xl font-heading font-bold text-white mb-2">
+            {isAdmin ? 'Admin Portal' : (isLogin ? 'Welcome Back' : 'Create Account')}
+          </h2>
+          <p className="text-zinc-500 text-sm">
+            {isAdmin ? 'Authorized personnel only.' : (isLogin ? 'Sign in to access your orders.' : 'Join Xyon3D today.')}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative group">
-            <input
-              type="password"
-              className={`w-full bg-zinc-900 border ${status === 'error' ? 'border-red-500/50' : 'border-white/10'} rounded-2xl p-4 text-center text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all`}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              autoFocus
-              placeholder="Enter Access Key"
-            />
-          </div>
+          {!show2FA ? (
+            <>
+              {!isLogin && (
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition-colors"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              )}
+              <input
+                type="email"
+                placeholder="Email Address"
+                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition-colors"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:border-blue-500 outline-none transition-colors"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </>
+          ) : (
+            <div className="animate-fade-in-up">
+              <p className="text-zinc-400 text-xs mb-2 text-center">Enter Security Code (2FA)</p>
+              <input
+                type="text"
+                placeholder="Security Code"
+                className="w-full bg-zinc-900 border border-blue-500/50 rounded-xl p-4 text-white text-center tracking-[1em] font-mono focus:border-blue-500 outline-none transition-colors"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                autoFocus
+                required
+              />
+            </div>
+          )}
 
           <button
-            type="submit"
-            className="w-full py-4 bg-white text-black rounded-2xl font-bold text-sm hover:bg-zinc-200 transition-colors shadow-lg uppercase tracking-wide"
+            disabled={status === 'success'}
+            className={`w-full py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2
+              ${status === 'success' ? 'bg-green-500 text-white' : 'bg-white text-black hover:bg-zinc-200'}
+            `}
           >
-            Authenticate
+            {status === 'success' ? <ShieldCheck size={20} /> : (show2FA ? 'Verify Code' : (isLogin ? 'Sign In' : 'Sign Up'))}
           </button>
+
+          {status === 'error' && (
+            <div className="text-red-400 text-xs text-center mt-2 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+              {errorMsg}
+            </div>
+          )}
         </form>
+
+        {!isAdmin && !show2FA && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-zinc-500 hover:text-white text-sm transition-colors"
+            >
+              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1277,10 +1363,9 @@ export default function App() {
                 onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
               />
             ) : (
-              <LoginScreen onLogin={(user, token) => {
+              <AuthScreen isAdmin={true} onLogin={(user, token) => {
                 setUser(user);
                 setIsAuthenticated(true);
-                // Token stored inside LoginScreen but state needs sync
               }} />
             )
           )}
