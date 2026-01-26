@@ -207,17 +207,20 @@ volumes:
 
                     <div className="lg:col-span-2 space-y-4">
                         {products.map(p => (
-                            <div key={p.id} className="bg-zinc-900 border border-white/5 rounded-2xl p-4 flex items-center justify-between hover:border-white/10 transition-all group">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-black">
+                            <div key={p.id} className="bg-zinc-900 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-white/20 transition-all group relative overflow-hidden">
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full">
+                                    <div className="w-full sm:w-16 h-40 sm:h-16 rounded-xl overflow-hidden bg-black shrink-0 border border-white/5">
                                         <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
                                     </div>
-                                    <div>
-                                        <h4 className="font-bold text-white text-base group-hover:text-blue-400 transition-colors">{p.name}</h4>
-                                        <p className="text-zinc-500 text-sm mt-0.5">${p.price} • {p.category}</p>
+                                    <div className="flex-grow">
+                                        <h4 className="font-bold text-white text-lg sm:text-base group-hover:text-blue-400 transition-colors">{p.name}</h4>
+                                        <p className="text-zinc-400 sm:text-zinc-500 text-sm mt-1 sm:mt-0.5 font-medium">${p.price} • <span className="text-zinc-500">{p.category}</span></p>
                                     </div>
                                 </div>
-                                <button onClick={() => onDeleteProduct(p.id)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-800 text-zinc-400 hover:bg-rose-500 hover:text-white transition-all">
+                                <button
+                                    onClick={() => onDeleteProduct(p.id)}
+                                    className="absolute top-4 right-4 sm:static w-10 h-10 flex items-center justify-center rounded-xl bg-black/50 sm:bg-zinc-800 text-white sm:text-zinc-400 hover:bg-rose-500 hover:text-white transition-all backdrop-blur-sm sm:backdrop-blur-none border border-white/10 sm:border-transparent"
+                                >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
@@ -241,67 +244,80 @@ volumes:
                         ) : (
                             <div className="space-y-3">
                                 {orders.map(order => (
-                                    <div key={order.id} className="bg-zinc-900/50 border border-white/5 rounded-[2rem] p-6 sm:p-8 hover:border-white/10 transition-all group">
+                                    <div key={order.id} className="bg-zinc-900/80 border border-white/10 rounded-[2rem] p-5 sm:p-8 hover:border-white/20 transition-all group backdrop-blur-sm">
                                         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
                                             {/* Left Side: Order Info */}
-                                            <div className="lg:w-1/3 space-y-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-zinc-400 group-hover:text-blue-400 transition-colors">
-                                                        <Package size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-white text-lg">Pedido #{order.id}</h4>
-                                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
-                                                            {new Date(order.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                        </p>
+                                            <div className="lg:w-1/3 space-y-5">
+                                                <div className="flex items-center justify-between lg:justify-start gap-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-zinc-400 group-hover:text-blue-400 transition-colors border border-white/5">
+                                                            <Package size={22} />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-white text-xl">#{order.id}</h4>
+                                                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                                                                {new Date(order.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-2">
-                                                    <p className="text-sm font-medium text-zinc-300 flex items-center gap-2">
-                                                        <User size={14} className="text-zinc-500" /> {order.customerEmail}
+                                                <div className="p-5 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                                                    <p className="text-sm font-medium text-zinc-300 flex items-center gap-2.5">
+                                                        <User size={15} className="text-zinc-500 shrink-0" />
+                                                        <span className="truncate">{order.customerEmail}</span>
                                                     </p>
                                                     {order.shippingAddress && (
-                                                        <p className="text-xs text-zinc-500 flex items-start gap-2 leading-relaxed">
-                                                            <Box size={14} className="text-zinc-600 mt-0.5" />
+                                                        <p className="text-xs text-zinc-500 flex items-start gap-2.5 leading-relaxed">
+                                                            <Box size={15} className="text-zinc-600 mt-0.5 shrink-0" />
                                                             <span className="italic">{order.shippingAddress}</span>
                                                         </p>
                                                     )}
                                                 </div>
 
                                                 <div className="flex items-center gap-4">
-                                                    <select
-                                                        value={order.status}
-                                                        onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as any)}
-                                                        className={`flex-grow bg-zinc-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-widest outline-none transition-all cursor-pointer
-                              ${order.status === 'delivered' ? 'text-green-400 border-green-500/20' :
-                                                                order.status === 'shipped' ? 'text-blue-400 border-blue-500/20' : 'text-yellow-400 border-yellow-500/20'}
+                                                    <div className="relative w-full">
+                                                        <select
+                                                            value={order.status}
+                                                            onChange={(e) => onUpdateOrderStatus(order.id, e.target.value as any)}
+                                                            className={`w-full appearance-none bg-zinc-950 border rounded-xl px-5 py-3.5 text-xs font-bold uppercase tracking-widest outline-none transition-all cursor-pointer
+                              ${order.status === 'delivered' ? 'text-green-400 border-green-500/20 hover:border-green-500/40' :
+                                                                    order.status === 'shipped' ? 'text-blue-400 border-blue-500/20 hover:border-blue-500/40' : 'text-yellow-400 border-yellow-500/20 hover:border-yellow-500/40'}
                             `}
-                                                    >
-                                                        <option value="pending">Pendiente</option>
-                                                        <option value="shipped">Enviado</option>
-                                                        <option value="delivered">Entregado</option>
-                                                    </select>
+                                                        >
+                                                            <option value="pending">Pendiente</option>
+                                                            <option value="shipped">Enviado</option>
+                                                            <option value="delivered">Entregado</option>
+                                                        </select>
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                                                            <Box size={14} className={
+                                                                order.status === 'delivered' ? 'text-green-400' :
+                                                                    order.status === 'shipped' ? 'text-blue-400' : 'text-yellow-400'
+                                                            } />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             {/* Right Side: Products Grid */}
                                             <div className="lg:w-2/3">
-                                                <div className="bg-black/20 rounded-[1.5rem] border border-white/5 overflow-hidden">
-                                                    <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Artículos en Pedido</span>
-                                                        <span className="text-xl font-heading font-bold text-white">${order.total.toFixed(2)}</span>
+                                                <div className="bg-black/20 rounded-[1.5rem] border border-white/5 overflow-hidden flex flex-col h-full">
+                                                    <div className="p-4 sm:p-5 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                                                            <ShoppingBag size={14} /> Items
+                                                        </span>
+                                                        <span className="text-2xl font-heading font-black text-white tracking-tight">${order.total.toFixed(2)}</span>
                                                     </div>
-                                                    <div className="max-h-[300px] overflow-y-auto p-4 space-y-3">
+                                                    <div className="max-h-[300px] overflow-y-auto p-4 sm:p-5 space-y-3 custom-scrollbar">
                                                         {order.items.map((item, idx) => (
-                                                            <div key={idx} className="flex items-center gap-4 bg-zinc-800/30 p-3 rounded-2xl border border-white/5 group/item transition-colors hover:bg-zinc-800/50">
-                                                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0">
+                                                            <div key={idx} className="flex items-center gap-4 bg-zinc-800/30 p-3 sm:p-4 rounded-2xl border border-white/5 group/item transition-colors hover:bg-zinc-800/60">
+                                                                <div className="w-14 h-14 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/5">
                                                                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                                                                 </div>
-                                                                <div className="flex-grow">
-                                                                    <h5 className="text-sm font-bold text-white group-hover/item:text-blue-400 transition-colors uppercase tracking-tight">{item.name}</h5>
-                                                                    <div className="flex items-center justify-between mt-0.5">
-                                                                        <span className="text-xs text-zinc-500">Cantidad: <span className="text-zinc-300 font-bold">{item.quantity}</span></span>
+                                                                <div className="flex-grow min-w-0">
+                                                                    <h5 className="text-sm font-bold text-white group-hover/item:text-blue-400 transition-colors uppercase tracking-tight truncate">{item.name}</h5>
+                                                                    <div className="flex items-center justify-between mt-1">
+                                                                        <span className="text-xs text-zinc-500 bg-black/30 px-2 py-0.5 rounded-md border border-white/5">x<span className="text-zinc-300 font-bold">{item.quantity}</span></span>
                                                                         <span className="text-xs font-bold text-white">${(item.price * (item.quantity || 1)).toFixed(2)}</span>
                                                                     </div>
                                                                 </div>
