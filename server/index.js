@@ -16,13 +16,39 @@ const pool = new Pool({
 });
 
 // Test database connection
-pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-        console.error('❌ Database connection error:', err);
-    } else {
+// Database initialization and connection test
+const initDatabase = async () => {
+    try {
+        // 1. Test connection
+        const res = await pool.query('SELECT NOW()');
         console.log('✅ Database connected successfully at:', res.rows[0].now);
+
+        // 2. Apply Schema (Idempotent: uses IF NOT EXISTS)
+        console.log('🔄 Checking database schema...');
+        const schemaPath = path.join(__dirname, 'db/schema.sql');
+        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+        await pool.query(schemaSql);
+        console.log('✅ Database schema verified/applied');
+
+        // 3. Seed Data (Only if products table is empty)
+        const productsCount = await pool.query('SELECT COUNT(*) FROM products');
+        if (parseInt(productsCount.rows[0].count) === 0) {
+            console.log('🌱 Database empty, seeding initial data...');
+            const seedPath = path.join(__dirname, 'db/seed.sql');
+            const seedSql = fs.readFileSync(seedPath, 'utf8');
+            await pool.query(seedSql);
+            console.log('✅ Database seeded successfully');
+        } else {
+            console.log(`ℹ️  Database contains ${productsCount.rows[0].count} products, skipping seed`);
+        }
+
+    } catch (err) {
+        console.error('❌ Database initialization error:', err);
+        // Don't exit process, let it try to handle requests or restart
     }
-});
+};
+
+initDatabase();
 
 // Middleware
 app.use(cors());
