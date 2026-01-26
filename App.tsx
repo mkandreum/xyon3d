@@ -4,6 +4,8 @@ import { Navbar } from './components/Navbar';
 import { ViewState, Product, CartItem, AppSettings, Order } from './types';
 import { ApiService } from './services/api';
 import { generateProductDescription } from './services/gemini.ts';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 // ----------------------------------------------------------------------
 // SUB-COMPONENTS
@@ -298,6 +300,62 @@ const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; onLoginSuccess
   );
 };
 
+// 5. Checkout Component
+const CheckoutForm: React.FC<{ total: number, onSuccess: () => void, userEmail: string }> = ({ total, onSuccess, userEmail }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [message, setMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) return;
+
+    setIsLoading(true);
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.href, // Redirect back to same page
+        payment_method_data: {
+          billing_details: {
+            email: userEmail
+          }
+        }
+      },
+      redirect: 'if_required'
+    });
+
+    if (error) {
+      setMessage(error.message || 'Payment failed');
+    } else {
+      // Payment succeeded
+      onSuccess();
+    }
+
+    setIsLoading(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement id="payment-element" theme="night" />
+      {message && <div className="text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20">{message}</div>}
+      <button
+        disabled={isLoading || !stripe || !elements}
+        id="submit"
+        className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors shadow-lg mt-4 disabled:opacity-50 flex justify-center items-center gap-2"
+      >
+        {isLoading ? <Loader2 className="animate-spin" size={20} /> : <div className="flex items-center gap-2"><Lock size={16} /> Pay ${total.toFixed(2)}</div>}
+      </button>
+      <div className="flex items-center justify-center gap-2 text-zinc-500 text-xs mt-4">
+        <ShieldCheck size={12} />
+        <span>Secure Payment via Stripe</span>
+      </div>
+    </form>
+  );
+};
+
 // 3. Login Screen - Professional
 const LoginScreen: React.FC<{ onLogin: (pass: string) => void }> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
@@ -435,7 +493,7 @@ services:
       - "coolify.managed=true"
       - "coolify.port=3000"
     environment:
-      - DATABASE_URL=postgres://${localSettings.smtpUser}:${localSettings.smtpPass}@db:5432/polyform
+      - DATABASE_URL=postgres://${localSettings.smtpUser}:${localSettings.smtpPass}@db:5432/xyon3d
     restart: always
 
   db:
@@ -445,7 +503,7 @@ services:
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=securepassword
-      - POSTGRES_DB=polyform
+      - POSTGRES_DB=xyon3d
     restart: always
 
 volumes:
@@ -655,10 +713,11 @@ volumes:
               <div key={key}>
                 <label className="text-xs text-zinc-400 uppercase tracking-widest block mb-2 font-semibold ml-1">{key.replace(/([A-Z])/g, ' $1')}</label>
                 <input
-                  type={key.includes('Pass') ? 'password' : 'text'}
+                  type={key.includes('Pass') || key.includes('Secret') ? 'password' : 'text'}
                   className="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors"
-                  value={(localSettings as any)[key]}
+                  value={(localSettings as any)[key] || ''}
                   onChange={e => setLocalSettings({ ...localSettings, [key]: e.target.value })}
+                  placeholder={key.includes('stripe') ? 'sk_test_... / pk_test_...' : ''}
                 />
               </div>
             ))}
@@ -733,6 +792,10 @@ export default function App() {
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'processing' | 'success'>('idle');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Stripe State
+  const [stripePromise, setStripePromise] = useState<any>(null);
+  const [clientSecret, setClientSecret] = useState('');
+
   // Load initial data from API
   useEffect(() => {
     const loadData = async () => {
@@ -756,6 +819,17 @@ export default function App() {
         setOrders(ordersData);
         setWishlist(wishlistData);
         setError(null);
+
+        // Load Stripe Config
+        try {
+          const stripeConfig = await fetch('/api/config/stripe').then(r => r.json());
+          if (stripeConfig.publishableKey) {
+            setStripePromise(loadStripe(stripeConfig.publishableKey));
+          }
+        } catch (e) {
+          console.warn('Failed to load Stripe key', e);
+        }
+
       } catch (err) {
         console.error('Error loading data:', err);
         setError('Failed to load data. Please check your connection.');
@@ -1155,69 +1229,97 @@ export default function App() {
                           <p className="text-zinc-400 text-xs mt-1">Confirmation email sent.</p>
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          <input
-                            type="email"
-                            placeholder="Email Address"
-                            className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white focus:border-blue-500 outline-none transition-colors text-sm"
-                            value={checkoutEmail}
-                            onChange={(e) => setCheckoutEmail(e.target.value)}
-                          />
-                          <button
-                            onClick={handleCheckout}
-                            disabled={checkoutStatus === 'processing'}
-                            className="w-full bg-white text-black font-bold text-sm py-4 rounded-xl hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg uppercase tracking-wider"
-                          >
-                            {checkoutStatus === 'processing' ? <Loader2 className="animate-spin" /> : 'Checkout'}
-                          </button>
-                        </div>
-                      )}
+                      ): (
+                          <div className = "space-y-4">
+                          {!clientSecret ? (
+                      <>
+                        <input
+                          type="email"
+                          placeholder="Email Address"
+                          className="w-full bg-zinc-950 border border-white/10 rounded-xl p-3.5 text-white focus:border-blue-500 outline-none transition-colors text-sm"
+                          value={checkoutEmail}
+                          onChange={(e) => setCheckoutEmail(e.target.value)}
+                        />
+                        <button
+                          onClick={handleCheckout}
+                          disabled={checkoutStatus === 'processing' || !checkoutEmail}
+                          className="w-full bg-white text-black font-bold text-sm py-4 rounded-xl hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg uppercase tracking-wider"
+                        >
+                          {checkoutStatus === 'processing' ? <Loader2 className="animate-spin" /> : 'Proceed to Payment'}
+                        </button>
+                      </>
+                      ) : (
+                      stripePromise && clientSecret && (
+                      <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>
+                        <CheckoutForm
+                          total={cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)}
+                          userEmail={checkoutEmail}
+                          onSuccess={async () => {
+                            // Create order after successful payment
+                            await ApiService.createOrder({
+                              customerEmail: checkoutEmail,
+                              items: cart,
+                              total: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0),
+                              status: 'pending',
+                              date: new Date().toISOString()
+                            });
+                            setCheckoutStatus('success');
+                            setClientSecret('');
+                          }}
+                        />
+                      </Elements>
+                      )
+                          )}
                     </div>
+                      )}
                   </div>
                 </div>
-              )}
-            </div>
+                </div>
           )}
-
-          {/* ADMIN VIEW */}
-          {view === ViewState.ADMIN && (
-            isAuthenticated ? (
-              <AdminPanel
-                settings={settings}
-                onSaveSettings={handleSaveSettings}
-                products={products}
-                onAddProduct={handleAddProduct}
-                onDeleteProduct={handleDeleteProduct}
-                orders={orders}
-                onUpdateOrderStatus={handleUpdateOrderStatus}
-                onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
-              />
-            ) : (
-              <LoginScreen onLogin={() => setIsAuthenticated(true)} />
-            )
-          )}
-
-        </main>
-
-        {/* Product Modal */}
-        {selectedProduct && (
-          <ProductDetailModal
-            product={selectedProduct}
-            isOpen={!!selectedProduct}
-            onClose={() => setSelectedProduct(null)}
-            onAddToCart={(p) => addToCart(p)}
-          />
-        )}
       </div>
+          )}
 
-      {/* Floating Pill Navbar */}
-      <Navbar
-        currentView={view}
-        setView={setView}
-        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
-        isAuthenticated={isAuthenticated}
-        isAdminVisible={adminVisible}
+      {/* ADMIN VIEW */}
+      {view === ViewState.ADMIN && (
+        isAuthenticated ? (
+          <AdminPanel
+            settings={settings}
+            onSaveSettings={handleSaveSettings}
+            products={products}
+            onAddProduct={handleAddProduct}
+            onDeleteProduct={handleDeleteProduct}
+            orders={orders}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+            onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
+          />
+        ) : (
+          <LoginScreen onLogin={() => setIsAuthenticated(true)} />
+        )
+      )}
+
+    </main>
+
+        {/* Product Modal */ }
+  {
+    selectedProduct && (
+      <ProductDetailModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={(p) => addToCart(p)}
       />
-    </div>
+    )
+  }
+      </div >
+
+    {/* Floating Pill Navbar */ }
+    < Navbar
+  currentView = { view }
+  setView = { setView }
+  cartCount = { cart.reduce((acc, item) => acc + item.quantity, 0) }
+  isAuthenticated = { isAuthenticated }
+  isAdminVisible = { adminVisible }
+    />
+    </div >
   );
 }

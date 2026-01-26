@@ -1,5 +1,5 @@
 {
-  "name": "polyform-3d-store",
+  "name": "xyon3d-store",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@google/genai": "^1.38.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -21,7 +23,8 @@
     "nodemailer": "^7.0.12",
     "pg": "^8.11.3",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

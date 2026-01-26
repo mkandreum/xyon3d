@@ -4,16 +4,16 @@ const API_BASE_URL = window.location.hostname === 'localhost' ? 'http://localhos
 
 // Session ID for wishlist (in production, this would be handled by authentication)
 const getSessionId = () => {
-    let sessionId = localStorage.getItem('polyform_session_id');
+    let sessionId = localStorage.getItem('xyon3d_session_id');
     if (!sessionId) {
         sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('polyform_session_id', sessionId);
+        localStorage.setItem('xyon3d_session_id', sessionId);
     }
     return sessionId;
 };
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('polyform_token');
+    const token = localStorage.getItem('xyon3d_token');
     return {
         'Content-Type': 'application/json',
         'X-Session-ID': getSessionId(),

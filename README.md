@@ -1,4 +1,4 @@
-# PolyForm 3D Store
+# Xyon3D Store
 
 A modern, full-stack 3D printing e-commerce platform with PostgreSQL database, built for Docker deployment on Coolify.
 

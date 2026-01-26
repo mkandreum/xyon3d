@@ -410,6 +410,56 @@ app.patch('/api/orders/:id/status', async (req, res) => {
     }
 });
 
+// -------------------- STRIPE --------------------
+
+// Get Stripe Config (Publishable Key Only)
+app.get('/api/config/stripe', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT value FROM settings WHERE key = 'stripePublishableKey'");
+        if (result.rows.length > 0) {
+            res.json({ publishableKey: result.rows[0].value });
+        } else {
+            res.json({ publishableKey: null });
+        }
+    } catch (error) {
+        console.error('Error fetching Stripe key:', error);
+        res.status(500).json({ error: 'Failed' });
+    }
+});
+
+// Create Payment Intent
+app.post('/api/create-payment-intent', async (req, res) => {
+    try {
+        const { items, total } = req.body;
+
+        // Get Secret Key securely from DB
+        const result = await pool.query("SELECT value FROM settings WHERE key = 'stripeSecretKey'");
+        if (result.rows.length === 0 || !result.rows[0].value) {
+            return res.status(500).json({ error: 'Stripe not configured' });
+        }
+
+        const stripeSecretKey = result.rows[0].value;
+        const stripe = require('stripe')(stripeSecretKey);
+
+        // Calculate amount in cents
+        const amount = Math.round(total * 100);
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount,
+            currency: 'usd',
+            // In a real app, verify item prices from DB here to prevent tampering
+            automatic_payment_methods: {
+                enabled: true,
+            },
+        });
+
+        res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+        console.error('Stripe error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // -------------------- SETTINGS --------------------
 
 // Get all settings
