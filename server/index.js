@@ -410,53 +410,60 @@ app.patch('/api/orders/:id/status', async (req, res) => {
     }
 });
 
-// -------------------- STRIPE --------------------
+// -------------------- MONEI --------------------
 
-// Get Stripe Config (Publishable Key Only)
-app.get('/api/config/stripe', async (req, res) => {
+// Get MONEI Config (Account ID)
+app.get('/api/config/monei', async (req, res) => {
     try {
-        const result = await pool.query("SELECT value FROM settings WHERE key = 'stripePublishableKey'");
+        const result = await pool.query("SELECT value FROM settings WHERE key = 'moneiAccountId'");
         if (result.rows.length > 0) {
-            res.json({ publishableKey: result.rows[0].value });
+            res.json({ accountId: result.rows[0].value });
         } else {
-            res.json({ publishableKey: null });
+            res.json({ accountId: null });
         }
     } catch (error) {
-        console.error('Error fetching Stripe key:', error);
+        console.error('Error fetching MONEI Account ID:', error);
         res.status(500).json({ error: 'Failed' });
     }
 });
 
-// Create Payment Intent
-app.post('/api/create-payment-intent', async (req, res) => {
+// Create MONEI Payment
+app.post('/api/create-payment', async (req, res) => {
     try {
-        const { items, total } = req.body;
+        const { items, total, customerEmail } = req.body;
 
-        // Get Secret Key securely from DB
-        const result = await pool.query("SELECT value FROM settings WHERE key = 'stripeSecretKey'");
+        // Get API Key securely from DB
+        const result = await pool.query("SELECT value FROM settings WHERE key = 'moneiApiKey'");
         if (result.rows.length === 0 || !result.rows[0].value) {
-            return res.status(500).json({ error: 'Stripe not configured' });
+            return res.status(500).json({ error: 'MONEI not configured' });
         }
 
-        const stripeSecretKey = result.rows[0].value;
-        const stripe = require('stripe')(stripeSecretKey);
+        const moneiApiKey = result.rows[0].value;
+        const { Monei } = require('@monei-js/node-sdk');
+        const monei = new Monei(moneiApiKey);
 
-        // Calculate amount in cents
-        const amount = Math.round(total * 100);
-
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: amount,
-            currency: 'usd',
-            // In a real app, verify item prices from DB here to prevent tampering
-            automatic_payment_methods: {
-                enabled: true,
+        // Create Payment
+        const payment = await monei.payments.create({
+            amount: Math.round(total * 100), // In cents
+            currency: 'EUR',
+            orderId: `ORDER-${Date.now()}`,
+            description: `Order from ${customerEmail}`,
+            customer: {
+                email: customerEmail
             },
+            callbackUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/api/monei/webhook`,
+            completeUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_success=true`,
+            cancelUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_cancel=true`
         });
 
-        res.json({ clientSecret: paymentIntent.client_secret });
+        res.json({
+            paymentId: payment.id,
+            token: payment.token,
+            redirectUrl: payment.nextAction?.redirectUrl
+        });
     } catch (error) {
-        console.error('Stripe error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('MONEI error:', error);
+        res.status(500).json({ error: 'Payment creation failed: ' + error.message });
     }
 });
 

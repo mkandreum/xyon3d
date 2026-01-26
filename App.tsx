@@ -825,15 +825,7 @@ export default function App() {
         setWishlist(wishlistData);
         setError(null);
 
-        // Load Stripe Config
-        try {
-          const stripeConfig = await fetch('/api/config/stripe').then(r => r.json());
-          if (stripeConfig.publishableKey) {
-            setStripePromise(loadStripe(stripeConfig.publishableKey));
-          }
-        } catch (e) {
-          console.warn('Failed to load Stripe key', e);
-        }
+
 
       } catch (err) {
         console.error('Error loading data:', err);
@@ -1235,7 +1227,7 @@ export default function App() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {!clientSecret && !checkoutEmail ? ( // Simplified check
+                          {!checkoutEmail ? ( // Simplified check
                             <>
                               <input
                                 type="email"
