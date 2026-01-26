@@ -656,16 +656,22 @@ volumes:
     <div className="max-w-7xl mx-auto pb-32 pt-6 px-4 sm:px-6 animate-fade-in-up">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
         <div className="flex gap-2 p-1.5 bg-zinc-900 rounded-full border border-white/5 shadow-sm overflow-x-auto">
-          {['products', 'orders', 'settings', 'system'].map(tab => (
+          {[
+            { id: 'products', label: 'Artículos', icon: Box },
+            { id: 'orders', label: 'Pedidos', icon: ShoppingBag },
+            { id: 'settings', label: 'Tienda', icon: Settings },
+            { id: 'system', label: 'Docker', icon: Database }
+          ].map(tab => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`px-4 sm:px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
                 ? 'bg-zinc-800 text-white shadow-md border border-white/5'
                 : 'text-zinc-500 hover:text-white hover:bg-zinc-800/50'
                 }`}
             >
-              {tab}
+              <tab.icon size={14} />
+              {tab.label}
             </button>
           ))}
         </div>
@@ -1166,22 +1172,24 @@ export default function App() {
 
       <div className="relative z-10 w-full min-h-screen flex flex-col">
 
-        {/* Header - Transparent Sticky */}
-        <header className="px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center sticky top-0 z-40 transition-all duration-300 backdrop-blur-md bg-black/40 border-b border-white/5">
-          <button onClick={() => setLogoClicks(p => p + 1)} className="text-xl sm:text-2xl font-heading font-extrabold tracking-tight text-white select-none focus:outline-none flex items-center gap-2 sm:gap-3">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white text-black flex items-center justify-center rounded-lg">
-              <Hexagon size={16} className="sm:w-[18px] sm:h-[18px]" fill="black" />
-            </div>
-            <span className="hidden sm:inline">{settings.storeName || 'Xyon3D'}</span>
-            <span className="sm:hidden">Xyon3D</span>
-          </button>
+        {/* Header - Transparent Sticky (Only shown if NOT in Admin Authenticated mode) */}
+        {!(view === ViewState.ADMIN && isAuthenticated) && (
+          <header className="px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center sticky top-0 z-40 transition-all duration-300 backdrop-blur-md bg-black/40 border-b border-white/5">
+            <button onClick={() => setLogoClicks(p => p + 1)} className="text-xl sm:text-2xl font-heading font-extrabold tracking-tight text-white select-none focus:outline-none flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white text-black flex items-center justify-center rounded-lg">
+                <Hexagon size={16} className="sm:w-[18px] sm:h-[18px]" fill="black" />
+              </div>
+              <span className="hidden sm:inline">{settings.storeName || 'Xyon3D'}</span>
+              <span className="sm:hidden">Xyon3D</span>
+            </button>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            {isAuthenticated && (
-              <span className="text-[9px] sm:text-[10px] text-blue-400 font-bold border border-blue-500/20 px-2 sm:px-3 py-1 bg-blue-500/5 rounded-full uppercase tracking-wider">Admin</span>
-            )}
-          </div>
-        </header>
+            <div className="flex items-center gap-2 sm:gap-4">
+              {isAuthenticated && (
+                <span className="text-[9px] sm:text-[10px] text-blue-400 font-bold border border-blue-500/20 px-2 sm:px-3 py-1 bg-blue-500/5 rounded-full uppercase tracking-wider">Admin</span>
+              )}
+            </div>
+          </header>
+        )}
 
         <main className="flex-grow">
 
@@ -1466,16 +1474,36 @@ export default function App() {
           {/* ADMIN VIEW */}
           {view === ViewState.ADMIN && (
             isAuthenticated ? (
-              <AdminPanel
-                settings={settings}
-                onSaveSettings={handleSaveSettings}
-                products={products}
-                onAddProduct={handleAddProduct}
-                onDeleteProduct={handleDeleteProduct}
-                orders={orders}
-                onUpdateOrderStatus={handleUpdateOrderStatus}
-                onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
-              />
+              <div className="min-h-screen bg-black animate-fade-in">
+                {/* Custom Minimal Header for Admin */}
+                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-950/50 backdrop-blur-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">
+                      <Hexagon size={18} fill="white" />
+                    </div>
+                    <h1 className="text-xl font-heading font-bold text-white tracking-tight">Control Center</h1>
+                  </div>
+                  <button
+                    onClick={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
+                    className="px-4 py-2 bg-zinc-900 border border-white/10 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-colors"
+                  >
+                    Exit Admin
+                  </button>
+                </div>
+
+                <div className="pb-40">
+                  <AdminPanel
+                    settings={settings}
+                    onSaveSettings={handleSaveSettings}
+                    products={products}
+                    onAddProduct={handleAddProduct}
+                    onDeleteProduct={handleDeleteProduct}
+                    orders={orders}
+                    onUpdateOrderStatus={handleUpdateOrderStatus}
+                    onLogout={() => { setIsAuthenticated(false); setView(ViewState.STORE); }}
+                  />
+                </div>
+              </div>
             ) : (
               <AuthScreen isAdmin={true} onLogin={handleLogin} />
             )
@@ -1496,14 +1524,16 @@ export default function App() {
         }
       </div >
 
-      {/* Floating Pill Navbar */}
-      < Navbar
-        currentView={view}
-        setView={setView}
-        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
-        isAuthenticated={isAuthenticated}
-        isAdminVisible={adminVisible}
-      />
+      {/* Floating Pill Navbar - Hidden if in Admin Authenticated mode */}
+      {!(view === ViewState.ADMIN && isAuthenticated) && (
+        <Navbar
+          currentView={view}
+          setView={setView}
+          cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
+          isAuthenticated={isAuthenticated}
+          isAdminVisible={adminVisible}
+        />
+      )}
     </div >
   );
 }
