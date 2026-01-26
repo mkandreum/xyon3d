@@ -83,9 +83,6 @@ const initDatabase = async () => {
                 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 10;
             `);
             console.log('✅ Migration applied: stock column verified');
-                ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 10;
-            `);
-            console.log('✅ Migration applied: stock column verified');
         } catch (e) {
             console.log('ℹ️ Migration note:', e.message);
         }
@@ -97,7 +94,7 @@ const initDatabase = async () => {
             `);
             console.log('✅ Migration applied: wishlist user_id verified');
         } catch (e) {
-             console.log('ℹ️ Migration note (wishlist):', e.message);
+            console.log('ℹ️ Migration note (wishlist):', e.message);
         }
 
         // 2.6 Migration: Create users table if schema didn't catch it
@@ -128,7 +125,7 @@ const initDatabase = async () => {
             await pool.query(seedSql);
             console.log('✅ Database seeded successfully');
         } else {
-            console.log(`ℹ️  Database contains ${ productsCount.rows[0].count } products, skipping seed`);
+            console.log(`ℹ️  Database contains ${productsCount.rows[0].count} products, skipping seed`);
         }
 
     } catch (err) {
@@ -300,7 +297,7 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
         // Return the public URL for the file
-        const fileUrl = `/ uploads / ${ req.file.filename } `;
+        const fileUrl = `/ uploads / ${req.file.filename} `;
         res.json({ url: fileUrl });
     } catch (error) {
         console.error('File upload error:', error);
@@ -437,7 +434,7 @@ const sendEmail = async (to, subject, html) => {
         });
 
         const mailOptions = {
-            from: `"Xyon3D Store" < ${ settings.smtpUser }> `,
+            from: `"Xyon3D Store" < ${settings.smtpUser}> `,
             to,
             subject,
             html,
@@ -490,10 +487,10 @@ app.post('/api/orders', async (req, res) => {
         for (const item of items) {
             const productRes = await client.query('SELECT stock FROM products WHERE id = $1', [item.id]);
             if (productRes.rows.length === 0) {
-                throw new Error(`Product ${ item.name } not found`);
+                throw new Error(`Product ${item.name} not found`);
             }
             if (productRes.rows[0].stock < item.quantity) {
-                throw new Error(`Insufficient stock for ${ item.name }`);
+                throw new Error(`Insufficient stock for ${item.name}`);
             }
         }
 
@@ -520,7 +517,7 @@ app.post('/api/orders', async (req, res) => {
             <p><strong>Total: $${total.toFixed(2)}</strong></p>
             <p>We will notify you when your order is shipped.</p>
             `;
-        sendEmail(customerEmail, `Order Confirmation #${ result.rows[0].id } `, emailHtml);
+        sendEmail(customerEmail, `Order Confirmation #${result.rows[0].id} `, emailHtml);
 
         res.status(201).json({
             id: result.rows[0].id,
@@ -554,9 +551,9 @@ app.patch('/api/orders/:id/status', authenticateToken, isAdmin, async (req, res)
 
         // Send Status Update Email
         if (['shipped', 'delivered'].includes(status)) {
-            const subject = status === 'shipped' ? `Order #${ id } Shipped! 🚚` : `Order #${ id } Delivered! 📦`;
+            const subject = status === 'shipped' ? `Order #${id} Shipped! 🚚` : `Order #${id} Delivered! 📦`;
             const html = `
-                < h1 > Update on Order #${ id }</h1 >
+                < h1 > Update on Order #${id}</h1 >
                 <p>Your order status is now: <strong style="text-transform:uppercase;">${status}</strong></p>
                 <p>Track your order or view details in your account.</p>
             `;
@@ -607,13 +604,13 @@ app.post('/api/create-payment', async (req, res) => {
         const payment = await monei.payments.create({
             amount: Math.round(total * 100), // In cents
             currency: 'EUR',
-            orderId: orderId ? `ORDER - ${ orderId } ` : `ORDER - ${ Date.now() } `, // Fallback if no ID
-            description: `Order #${ orderId } from ${ customerEmail } `,
+            orderId: orderId ? `ORDER - ${orderId} ` : `ORDER - ${Date.now()} `, // Fallback if no ID
+            description: `Order #${orderId} from ${customerEmail} `,
             customer: {
                 email: customerEmail
             },
-            callbackUrl: `${ process.env.SERVICE_URL_APP || 'http://localhost:3000' } /api/monei / webhook`,
-            completeUrl: `${ process.env.SERVICE_URL_APP || 'http://localhost:3000' }/?payment_success=true&orderId=${orderId}`,
+            callbackUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'} /api/monei / webhook`,
+            completeUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_success=true&orderId=${orderId}`,
             cancelUrl: `${process.env.SERVICE_URL_APP || 'http://localhost:3000'}/?payment_cancel=true`
         });
 
