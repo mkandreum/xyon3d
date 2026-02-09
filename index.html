@@ -34,6 +34,7 @@
     rel="stylesheet">
 
   <!-- React Import Map (optional with Vite, but keeping if used) -->
+  <!-- Note: Must be loaded before other module scripts to prevent module resolution warnings -->
   <script type="importmap">
   {
     "imports": {
@@ -46,7 +47,7 @@
   }
   </script>
 
-  <!-- Model Viewer -->
+  <!-- Model Viewer - Loaded after importmap to ensure proper module resolution -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
   <!-- Main Styles -->

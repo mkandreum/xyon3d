@@ -35,7 +35,7 @@ export const CartView: React.FC<CartViewProps> = ({
                         {cart.map(item => (
                             <div key={item.id} className="bg-zinc-900/50 border border-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex gap-3 sm:gap-6 items-center hover:bg-zinc-900 transition-colors">
                                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-black rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0 border border-white/5">
-                                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
+                                    <img src={item.imageUrl} alt={`${item.name} - producto en carrito`} className="w-full h-full object-cover" loading="lazy" />
                                 </div>
                                 <div className="flex-grow min-w-0">
                                     <div className="flex justify-between items-start mb-1 gap-2">
