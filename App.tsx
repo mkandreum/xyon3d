@@ -246,7 +246,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-white pb-32">
+    <div className="min-h-screen bg-black text-zinc-100 font-sans selection:bg-blue-500/30 selection:text-white pb-24 sm:pb-32">
       {/* Premium Tech Background */}
       <div className="fixed inset-0 bg-grid pointer-events-none z-0"></div>
 
@@ -307,12 +307,12 @@ export default function App() {
             !user ? (
               <AuthScreen onLogin={handleLogin} />
             ) : (
-              <div className="px-4 py-12 animate-fade-in-up max-w-7xl mx-auto w-full">
-                <div className="flex items-center gap-4 mb-12">
-                  <Heart className="text-rose-500 fill-rose-500" size={32} />
-                  <h2 className="text-4xl font-heading font-bold text-white">Artículos Guardados</h2>
+              <div className="px-4 py-8 sm:py-12 animate-fade-in-up max-w-7xl mx-auto w-full">
+                <div className="flex items-center gap-3 sm:gap-4 mb-8 sm:mb-12">
+                  <Heart className="text-rose-500 fill-rose-500 w-7 h-7 sm:w-8 sm:h-8" />
+                  <h2 className="text-3xl sm:text-4xl font-heading font-bold text-white">Artículos Guardados</h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {wishlistProducts.map(product => (
                     <ProductCard
                       key={product.id}
@@ -325,7 +325,7 @@ export default function App() {
                   ))}
                 </div>
                 {wishlistProducts.length === 0 && (
-                  <div className="text-center py-32 text-zinc-500 font-light">
+                  <div className="text-center py-20 sm:py-32 text-zinc-500 font-light text-sm sm:text-base">
                     Tu lista de deseos está vacía. Comienza a explorar para guardar artículos.
                   </div>
                 )}

@@ -2,8 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 
 export const generateProductDescription = async (productName: string): Promise<string> => {
   if (!process.env.API_KEY) {
-    console.warn("API Key not found. Returning mock description.");
-    return `Premium quality 3D printed ${productName}. Manufactured with high precision tolerances using industry-standard materials. Durable, lightweight, and inspected for quality assurance.`;
+    console.warn("Gemini API Key not configured. Using generic description.");
+    return `High-quality 3D printed ${productName}. Precision manufactured with professional-grade materials for durability and detail.`;
   }
 
   try {

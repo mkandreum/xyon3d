@@ -28,7 +28,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     activeTab
 }) => {
     const [newProduct, setNewProduct] = useState<Partial<Product>>({
-        name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: []
+        name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: undefined, gallery: []
     });
     const [galleryText, setGalleryText] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -70,11 +70,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 categoryId: newProduct.category || 'General',
                 // @ts-ignore
                 category: newProduct.category || 'General',
-                modelUrl: newProduct.modelUrl || '',
+                modelUrl: newProduct.modelUrl || undefined,
                 gallery: galleryText.split('\n').filter(url => url.trim() !== ''),
                 stock: newProduct.stock || 10
             });
-            setNewProduct({ name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: '', gallery: [], stock: 10 });
+            setNewProduct({ name: '', price: 0, description: '', imageUrl: 'https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?auto=format&fit=crop&w=800', category: 'General', modelUrl: undefined, gallery: [], stock: 10 });
             setGalleryText('');
         }
     };

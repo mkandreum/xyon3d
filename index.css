@@ -5,7 +5,13 @@ body {
     background-color: #050505;
     color: #f4f4f5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+}
+
+/* Performance optimizations */
+* {
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Technical Grid Pattern */
@@ -115,4 +121,9 @@ input[type=number]::-webkit-outer-spin-button {
 
 .animate-pulse-subtle {
     animation: pulse-subtle 2s infinite;
+}
+
+/* Image loading optimization */
+img {
+    content-visibility: auto;
 }
