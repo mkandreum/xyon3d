@@ -56,65 +56,65 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ total, userEmail, it
     };
 
     return (
-        <div className="space-y-6 animate-fade-in-up">
-            <div className="bg-zinc-900 border border-white/10 p-6 rounded-3xl text-center group transition-all hover:border-blue-500/30">
-                <div className="mb-6 flex justify-center">
-                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform duration-500">
-                        <Box size={24} />
+        <div className="space-y-4 sm:space-y-6 animate-fade-in-up">
+            <div className="bg-zinc-900 border border-white/10 p-4 sm:p-6 rounded-2xl sm:rounded-3xl text-center group transition-all hover:border-blue-500/30">
+                <div className="mb-4 sm:mb-6 flex justify-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/5 rounded-xl sm:rounded-2xl flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform duration-500">
+                        <Box size={20} className="sm:w-6 sm:h-6" />
                     </div>
                 </div>
 
-                <p className="text-zinc-400 mb-6 text-sm">Pago seguro vía MONEI (Bizum, PayPal, Tarjetas)</p>
+                <p className="text-zinc-400 mb-4 sm:mb-6 text-xs sm:text-sm">Pago seguro vía MONEI (Bizum, PayPal, Tarjetas)</p>
 
                 {/* Address Input */}
-                <div className="mb-6 text-left space-y-2">
-                    <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold ml-1">Dirección de Envío</label>
+                <div className="mb-4 sm:mb-6 text-left space-y-2">
+                    <label className="text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-widest font-bold ml-1">Dirección de Envío</label>
                     <textarea
                         required
                         placeholder="Calle, Número, Piso, Código Postal, Ciudad, País"
                         rows={3}
-                        className="w-full bg-zinc-950 border border-white/10 rounded-2xl p-4 text-white text-sm focus:border-blue-500 outline-none transition-colors resize-none"
+                        className="w-full bg-zinc-950 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white text-xs sm:text-sm focus:border-blue-500 outline-none transition-colors resize-none"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                     />
                 </div>
 
-                <div className="flex justify-center gap-3 mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Bizum</div>
-                    <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">Visa/MC</div>
-                    <div className="bg-zinc-800 px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-tighter uppercase border border-white/5">PayPal</div>
+                <div className="flex justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-zinc-800 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold tracking-tighter uppercase border border-white/5">Bizum</div>
+                    <div className="bg-zinc-800 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold tracking-tighter uppercase border border-white/5">Visa/MC</div>
+                    <div className="bg-zinc-800 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[9px] sm:text-[10px] font-bold tracking-tighter uppercase border border-white/5">PayPal</div>
                 </div>
 
                 <button
                     onClick={handleMoneiPayment}
                     disabled={loading}
                     className={`
-            w-full py-5 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-3 shadow-xl 
+            w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 shadow-xl 
             ${loading ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-white text-black hover:bg-zinc-100 hover:-translate-y-1 active:scale-95'}
           `}
                 >
                     {loading ? (
                         <>
-                            <Loader2 className="animate-spin" size={20} />
-                            <span>Abriendo Pasarela...</span>
+                            <Loader2 className="animate-spin w-5 h-5 sm:w-5 sm:h-5" />
+                            <span className="text-xs sm:text-sm">Abriendo Pasarela...</span>
                         </>
                     ) : (
                         <>
-                            <ShieldCheck size={20} className="text-blue-600" />
-                            <span className="uppercase tracking-widest text-sm">Pagar ${total.toFixed(2)} Ahora</span>
+                            <ShieldCheck size={18} className="sm:w-5 sm:h-5 text-blue-600" />
+                            <span className="uppercase tracking-widest text-xs sm:text-sm">Pagar ${total.toFixed(2)} Ahora</span>
                         </>
                     )}
                 </button>
             </div>
 
             {error && (
-                <div className="text-red-400 text-xs text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/20 animate-shake">
+                <div className="text-red-400 text-[10px] sm:text-xs text-center bg-red-500/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-red-500/20 animate-shake">
                     {error}
                 </div>
             )}
 
-            <div className="flex items-center justify-center gap-2 text-zinc-600 text-[10px] uppercase font-bold tracking-widest">
-                <Lock size={12} className="text-zinc-700" />
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-zinc-600 text-[9px] sm:text-[10px] uppercase font-bold tracking-widest">
+                <Lock size={10} className="sm:w-3 sm:h-3 text-zinc-700" />
                 <span>Conexión Encriptada SSL 256-bit</span>
             </div>
         </div>

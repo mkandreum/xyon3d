@@ -10,15 +10,16 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- Insert initial products with real 3D printing focus
-INSERT INTO products (name, description, price, category, image_url, model_url, gallery) VALUES
+INSERT INTO products (name, description, price, category, image_url, model_url, gallery, stock) VALUES
 (
     'Voron StealthBurner Toolhead',
     'Premium CNC-machined aluminum toolhead for Voron 3D printers. Features integrated part cooling, LED mounting points, and optimized airflow design. Compatible with E3D V6 and Dragon hotends. Includes mounting hardware and detailed assembly instructions.',
     89.99,
     'Printer Parts',
     'https://images.unsplash.com/photo-1631541909061-71e349d1f203?q=80&w=1200&auto=format&fit=crop',
-    'https://models.readyplayer.me/64f02638843c0807b585358c.glb',
-    '["https://images.unsplash.com/photo-1631541909061-71e349d1f203?q=80&w=1200", "https://images.unsplash.com/photo-1615858079603-2415d3159082?q=80&w=1200"]'::jsonb
+    '',
+    '["https://images.unsplash.com/photo-1631541909061-71e349d1f203?q=80&w=1200", "https://images.unsplash.com/photo-1615858079603-2415d3159082?q=80&w=1200", "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?q=80&w=1200"]'::jsonb,
+    25
 ),
 (
     'Articulated Dragon - Print-in-Place',
@@ -26,8 +27,9 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     24.99,
     'Toys & Figurines',
     'https://images.unsplash.com/photo-1615858079603-2415d3159082?q=80&w=1200&auto=format&fit=crop',
-    'https://storage.googleapis.com/mikes-public-assets/Dragon.glb',
-    '["https://images.unsplash.com/photo-1615858079603-2415d3159082?q=80&w=1200", "https://images.unsplash.com/photo-1596496181963-c40d6c54780b?q=80&w=1200"]'::jsonb
+    '',
+    '["https://images.unsplash.com/photo-1615858079603-2415d3159082?q=80&w=1200", "https://images.unsplash.com/photo-1596496181963-c40d6c54780b?q=80&w=1200"]'::jsonb,
+    50
 ),
 (
     'Geometric Succulent Planter Set',
@@ -35,8 +37,9 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     34.99,
     'Home & Garden',
     'https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=1200&auto=format&fit=crop',
-    'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-    '["https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=1200", "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=1200"]'::jsonb
+    '',
+    '["https://images.unsplash.com/photo-1485955900006-10f4d324d411?q=80&w=1200", "https://images.unsplash.com/photo-1463936575829-25148e1db1b8?q=80&w=1200", "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=1200"]'::jsonb,
+    30
 ),
 (
     'Cyberpunk Helmet - Cosplay Grade',
@@ -44,8 +47,9 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     149.99,
     'Cosplay & Props',
     'https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=1200&auto=format&fit=crop',
-    'https://modelviewer.dev/shared-assets/models/RobotExpressive.glb',
-    '["https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=1200", "https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?q=80&w=1200"]'::jsonb
+    '',
+    '["https://images.unsplash.com/photo-1535295972055-1c762f4483e5?q=80&w=1200", "https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?q=80&w=1200"]'::jsonb,
+    15
 ),
 (
     'Modular Gridfinity Storage System',
@@ -54,7 +58,8 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     'Organization',
     'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?q=80&w=1200&auto=format&fit=crop',
     '',
-    '["https://images.unsplash.com/photo-1587293852726-70cdb56c2866?q=80&w=1200"]'::jsonb
+    '["https://images.unsplash.com/photo-1587293852726-70cdb56c2866?q=80&w=1200", "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=1200"]'::jsonb,
+    40
 ),
 (
     'Flexi Rex - Articulated Dinosaur',
@@ -63,7 +68,8 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     'Toys & Figurines',
     'https://images.unsplash.com/photo-1551817958-11e0f7bbea0a?q=80&w=1200&auto=format&fit=crop',
     '',
-    '["https://images.unsplash.com/photo-1551817958-11e0f7bbea0a?q=80&w=1200"]'::jsonb
+    '["https://images.unsplash.com/photo-1551817958-11e0f7bbea0a?q=80&w=1200", "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?q=80&w=1200"]'::jsonb,
+    100
 ),
 (
     'Lithophane Moon Lamp',
@@ -72,7 +78,8 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     'Lighting',
     'https://images.unsplash.com/photo-1532693322450-2cb5c511067d?q=80&w=1200&auto=format&fit=crop',
     '',
-    '["https://images.unsplash.com/photo-1532693322450-2cb5c511067d?q=80&w=1200"]'::jsonb
+    '["https://images.unsplash.com/photo-1532693322450-2cb5c511067d?q=80&w=1200", "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200"]'::jsonb,
+    20
 ),
 (
     'Customizable Cable Management Kit',
@@ -81,6 +88,7 @@ INSERT INTO products (name, description, price, category, image_url, model_url, 
     'Organization',
     'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=1200&auto=format&fit=crop',
     '',
-    '["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=1200"]'::jsonb
+    '["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=1200", "https://images.unsplash.com/photo-1587293852726-70cdb56c2866?q=80&w=1200"]'::jsonb,
+    75
 )
 ON CONFLICT DO NOTHING;

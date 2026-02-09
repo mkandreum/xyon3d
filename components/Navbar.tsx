@@ -72,12 +72,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [activeTabId, currentView, activeAdminTab, tabs]); // Deps ensure recalc on change
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-auto animate-fade-in-up">
-      <nav ref={navRef} className="glass-nav rounded-full p-3 flex items-center justify-center shadow-2xl relative">
+    <div className="fixed bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-lg sm:w-auto animate-fade-in-up px-2 sm:px-0">
+      <nav ref={navRef} className="glass-nav rounded-full p-2 sm:p-3 flex items-center justify-center shadow-2xl relative">
 
         {/* Sliding Pill */}
         <div
-          className="absolute bg-white/10 rounded-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] h-[calc(100%-24px)] top-3"
+          className="absolute bg-white/10 rounded-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] h-[calc(100%-16px)] sm:h-[calc(100%-24px)] top-2 sm:top-3"
           style={{
             left: pillStyle.left,
             width: pillStyle.width,
@@ -107,28 +107,28 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               className={`
-                relative flex items-center justify-center px-6 py-4 rounded-full transition-colors duration-300 z-10
+                relative flex items-center justify-center px-3 sm:px-6 py-3 sm:py-4 rounded-full transition-colors duration-300 z-10
                 ${isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}
               `}
             >
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 <div className="relative">
                   <tab.icon
-                    size={showAdminNav ? 20 : 24}
+                    size={showAdminNav ? 18 : 20}
                     strokeWidth={isActive ? 2.5 : 2}
-                    className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-current'}`}
+                    className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-current'} sm:w-6 sm:h-6`}
                   />
 
                   {/* Notification Badge */}
                   {(tab as any).badge !== undefined && (tab as any).badge > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-500 text-white text-[9px] font-bold px-1 ring-2 ring-black">
+                    <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 flex h-3.5 min-w-[14px] sm:h-4 sm:min-w-[16px] items-center justify-center rounded-full bg-blue-500 text-white text-[8px] sm:text-[9px] font-bold px-0.5 sm:px-1 ring-1 sm:ring-2 ring-black">
                       {(tab as any).badge}
                     </span>
                   )}
                 </div>
 
                 {isActive && (
-                  <span className="text-xs sm:text-sm font-semibold tracking-wide animate-scale-in origin-left whitespace-nowrap overflow-hidden">
+                  <span className="text-[10px] sm:text-sm font-semibold tracking-wide animate-scale-in origin-left whitespace-nowrap overflow-hidden">
                     {tab.label}
                   </span>
                 )}
